@@ -1,13 +1,21 @@
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 
 export default function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const location = useLocation(); // Get current URL
+  const navigate = useNavigate(); // Navigate programmatically
 
   useEffect(() => {
-    const token = localStorage.getItem('jwt');
+    const token = localStorage.getItem("jwt");
     setIsAuthenticated(!!token);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("jwt");
+    setIsAuthenticated(false);
+    navigate("/signin");
+  };
 
   return (
     <nav className="flex justify-between items-center px-6 py-5 border-b border-gray-800 bg-gray-900/95 backdrop-blur-sm">
@@ -21,21 +29,26 @@ export default function Navbar() {
       <div className="flex items-center space-x-3">
         {isAuthenticated ? (
           <>
-            <Link
-              to="/ads/add"
-              className="px-4 py-2 text-gray-300 font-medium hover:text-gray-100 transition duration-200"
-            >
-              List your business
-            </Link>
-            <Link
-              to="/profile"
-              className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center border border-gray-600 hover:bg-gray-600 transition duration-200"
-              title="Profile"
-            >
-              <svg className="w-5 h-5 text-gray-200" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-              </svg>
-            </Link>
+            {location.pathname === "/profile" ? (
+              // Show Logout button on /profile instead of profile icon
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-red-400 hover:text-red-300 transition duration-200"
+              >
+                Logout
+              </button>
+            ) : (
+              // Otherwise show profile icon
+              <Link
+                to="/profile"
+                className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center border border-gray-600 hover:bg-gray-600 transition duration-200"
+                title="Profile"
+              >
+                <svg className="w-5 h-5 text-gray-200" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+              </Link>
+            )}
           </>
         ) : (
           <Link
@@ -45,6 +58,7 @@ export default function Navbar() {
             Sign In
           </Link>
         )}
+
         <Link
           to="/browse-ads"
           className="px-6 py-2 bg-gray-700 text-gray-100 font-medium rounded-lg border border-gray-600 hover:bg-gray-600 transition duration-200"
