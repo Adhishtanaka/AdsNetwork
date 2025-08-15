@@ -5,8 +5,6 @@ It provides a secure, scalable, and developer-friendly environment for managing 
 
 <img src="./screenshot/ss.png" width="600" alt="Website"/>
 
----
-
 ## Features
 
 * **Ballerina Backend**
