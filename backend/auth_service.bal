@@ -2,7 +2,6 @@ import ballerina/http;
 import ballerina/crypto;
 
 public  function authenticateUser(http:Request request) returns int|http:Unauthorized {
-    // Handle header access properly
     string|http:HeaderNotFoundError authHeaderResult = request.getHeader("Authorization");
     
     string? authHeader = ();

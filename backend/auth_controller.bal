@@ -28,7 +28,7 @@ service /auth on httpListener {
         if loginReq is error {
             return <http:BadRequest>{
                 body: {
-                    message: "Please provide email and password"
+                    message: "Please provide email, password, and location"
                 }
             };
         }
@@ -95,7 +95,7 @@ service /auth on httpListener {
         if registerReq is error {
             return <http:BadRequest>{
                 body: {
-                    message: "Please provide username, email, and password"
+                    message: "Please provide username, email, password, location, and phone"
                 }
             };
         }
@@ -118,7 +118,7 @@ service /auth on httpListener {
             };
         }
 
-        int|error userId = createUser(registerReq.username, registerReq.email, hashpass);
+        int|error userId = createUser(registerReq.username, registerReq.email, hashpass, registerReq.location, registerReq.phone);
         if userId is error {
             return <http:InternalServerError>{
                 body: {
