@@ -1,0 +1,167 @@
+@baseUrl = http://localhost:8080
+@contentType = application/json
+@phone = +94771234567
+@adId = 1
+@authToken = randomstring123456
+@commentId = 1
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Register
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+  "username": "johndoe",
+  "email": "user{{$timestamp}}@example.com",
+  "password": "securepassword",
+  "location": {
+    "name": "Colombo",
+    "lat": 6.9271,
+    "lng": 79.8612,
+    "geohash": "tc2m4z0f0"
+  },
+  "phone": "{{phone}}"
+}
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "user@example.com",
+  "password": "userpassword",
+  "location": {
+    "name": "Kandy",
+    "lat": 7.2906,
+    "lng": 80.6337,
+    "geohash": "tc31k23wn"
+  }
+}
+
+> {%
+  const body = JSON.parse(response.body);
+  if (body && body.token) {
+    client.global.set("authToken", body.token);
+  }
+%}
+
+
+### Get Profile
+GET {{baseUrl}}/auth/profile
+Authorization: Bearer {{authToken}}
+
+
+### Create Advertisement
+POST {{baseUrl}}/advertisements
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "title": "iPhone 13 Pro Max",
+  "description": "Excellent condition, lightly used, box and charger included.",
+  "price": "999.99",
+  "location": {
+    "name": "Colombo",
+    "lat": 6.9271,
+    "lng": 79.8612,
+    "geohash": "tc2m4z0f0"
+  },
+  "category": "Electronics",
+  "userEmail": "user@example.com",
+  "photoUrls": [
+    "https://example.com/photo1.jpg",
+    "https://example.com/photo2.jpg"
+  ]
+}
+
+### Get All Advertisements
+GET {{baseUrl}}/advertisements
+
+
+### Get Advertisement by ID
+GET {{baseUrl}}/advertisements/{{adId}}
+
+### Get My Advertisements
+GET {{baseUrl}}/advertisements/my-ads
+Authorization: Bearer {{authToken}}
+
+
+### Update Advertisement
+PUT {{baseUrl}}/advertisements/{{adId}}
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "title": "Updated iPhone 13 Pro Max",
+  "description": "Updated description with more details.",
+  "price": "899.99",
+  "location": {
+    "name": "Galle",
+    "lat": 6.0535,
+    "lng": 80.2200,
+    "geohash": "tc2f0m3j3"
+  },
+  "category": "Mobile Phones",
+  "photoUrls": [
+    "https://example.com/new_photo1.jpg"
+  ]
+}
+
+
+### Delete Advertisement
+DELETE {{baseUrl}}/advertisements/{{adId}}
+Authorization: Bearer {{authToken}}
+
+
+### Create Comment on Advertisement
+POST {{baseUrl}}/comments
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "ad_id": {{adId}},
+  "sentiment": "good",
+  "description": "Great product! Very satisfied."
+}
+
+### Get All Comments
+GET {{baseUrl}}/comments
+
+
+### Get Comment by ID
+GET {{baseUrl}}/comments/{{commentId}}
+
+
+### Get Comments for Advertisement
+GET {{baseUrl}}/comments/ad/{{adId}}
+
+
+### Delete Comment
+DELETE {{baseUrl}}/comments/{{commentId}}
+Authorization: Bearer {{authToken}}
+
+### CORS Preflight Example
+OPTIONS {{baseUrl}}/advertisements
+Origin: http://localhost:5173
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: content-type, authorization
+
+### Negative Tests
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "user@example.com"
+}
+
+POST {{baseUrl}}/comments
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+{
+  "ad_id": {{adId}},
+  "sentiment": "amazing", 
+  "description": "This should fail because sentiment is invalid."
+}
