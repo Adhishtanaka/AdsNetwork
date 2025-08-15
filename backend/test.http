@@ -4,11 +4,17 @@
 @adId = 1
 @authToken = randomstring123456
 @commentId = 1
-
-### Health Check
+###
 GET {{baseUrl}}/health
 
-### Register
+HTTP/1.1 200  - OK
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:26 +0530
+content-encoding: gzip
+content-length: 107
+###
 POST {{baseUrl}}/auth/register
 Content-Type: {{contentType}}
 
@@ -25,7 +31,14 @@ Content-Type: {{contentType}}
   "phone": "{{phone}}"
 }
 
-### Login
+HTTP/1.1 201  - Created
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:32 +0530
+content-encoding: gzip
+content-length: 138
+###
 POST {{baseUrl}}/auth/login
 Content-Type: {{contentType}}
 
@@ -46,14 +59,18 @@ Content-Type: {{contentType}}
     client.global.set("authToken", body.token);
   }
 %}
-
-
-### Get Profile
+###
 GET {{baseUrl}}/auth/profile
 Authorization: Bearer {{authToken}}
 
-
-### Create Advertisement
+HTTP/1.1 401  - Unauthorized
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:35 +0530
+content-encoding: gzip
+content-length: 64
+###
 POST {{baseUrl}}/advertisements
 Authorization: Bearer {{authToken}}
 Content-Type: {{contentType}}
@@ -76,19 +93,45 @@ Content-Type: {{contentType}}
   ]
 }
 
-### Get All Advertisements
+HTTP/1.1 401  - Unauthorized
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:35 +0530
+content-encoding: gzip
+content-length: 64
+###
 GET {{baseUrl}}/advertisements
 
-
-### Get Advertisement by ID
+HTTP/1.1 200  - OK
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:39 +0530
+content-encoding: gzip
+content-length: 555
+###
 GET {{baseUrl}}/advertisements/{{adId}}
 
-### Get My Advertisements
+HTTP/1.1 200  - OK
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:40 +0530
+content-encoding: gzip
+content-length: 557
+###
 GET {{baseUrl}}/advertisements/my-ads
 Authorization: Bearer {{authToken}}
 
-
-### Update Advertisement
+HTTP/1.1 401  - Unauthorized
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:41 +0530
+content-encoding: gzip
+content-length: 64
+###
 PUT {{baseUrl}}/advertisements/{{adId}}
 Authorization: Bearer {{authToken}}
 Content-Type: {{contentType}}
@@ -109,13 +152,25 @@ Content-Type: {{contentType}}
   ]
 }
 
-
-### Delete Advertisement
+HTTP/1.1 401  - Unauthorized
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:41 +0530
+content-encoding: gzip
+content-length: 64
+###
 DELETE {{baseUrl}}/advertisements/{{adId}}
 Authorization: Bearer {{authToken}}
 
-
-### Create Comment on Advertisement
+HTTP/1.1 401  - Unauthorized
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:41 +0530
+content-encoding: gzip
+content-length: 64
+###
 POST {{baseUrl}}/comments
 Authorization: Bearer {{authToken}}
 Content-Type: {{contentType}}
@@ -126,29 +181,66 @@ Content-Type: {{contentType}}
   "description": "Great product! Very satisfied."
 }
 
-### Get All Comments
+HTTP/1.1 401  - Unauthorized
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:42 +0530
+content-encoding: gzip
+content-length: 64
+###
 GET {{baseUrl}}/comments
 
-
-### Get Comment by ID
+HTTP/1.1 200  - OK
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:43 +0530
+content-encoding: gzip
+content-length: 185
+###
 GET {{baseUrl}}/comments/{{commentId}}
 
-
-### Get Comments for Advertisement
+HTTP/1.1 200  - OK
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:45 +0530
+content-encoding: gzip
+content-length: 180
+###
 GET {{baseUrl}}/comments/ad/{{adId}}
 
-
-### Delete Comment
+HTTP/1.1 200  - OK
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:45 +0530
+content-encoding: gzip
+content-length: 192
+###
 DELETE {{baseUrl}}/comments/{{commentId}}
 Authorization: Bearer {{authToken}}
 
-### CORS Preflight Example
+HTTP/1.1 401  - Unauthorized
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:46 +0530
+content-encoding: gzip
+content-length: 64
+###
 OPTIONS {{baseUrl}}/advertisements
 Origin: http://localhost:5173
 Access-Control-Request-Method: POST
 Access-Control-Request-Headers: content-type, authorization
 
-### Negative Tests
+HTTP/1.1 204  - No Content
+allow: POST, GET, OPTIONS
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:46 +0530
+###
 POST {{baseUrl}}/auth/login
 Content-Type: {{contentType}}
 
@@ -156,6 +248,14 @@ Content-Type: {{contentType}}
   "email": "user@example.com"
 }
 
+HTTP/1.1 400  - Bad Request
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:46 +0530
+content-encoding: gzip
+content-length: 84
+###
 POST {{baseUrl}}/comments
 Authorization: Bearer {{authToken}}
 Content-Type: {{contentType}}
@@ -165,3 +265,11 @@ Content-Type: {{contentType}}
   "sentiment": "amazing", 
   "description": "This should fail because sentiment is invalid."
 }
+
+HTTP/1.1 401  - Unauthorized
+content-type: application/json
+connection: close
+server: ballerina
+date: Fri, 15 Aug 2025 20:02:47 +0530
+content-encoding: gzip
+content-length: 64
