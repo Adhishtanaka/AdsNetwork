@@ -1,8 +1,6 @@
 import { useEffect, useState, Fragment } from "react";
 import { useNavigate } from "react-router";
 import { apiService } from "../../services/api";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
 import { 
   MapPinIcon, 
   PhoneIcon, 
@@ -14,71 +12,29 @@ import {
   ExclamationTriangleIcon
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition, Menu } from "@headlessui/react";
-import type { AdData } from "../../constants/types";
+import type { Ad, AdData } from "../../constants/types";
 import "leaflet/dist/leaflet.css";
+import Navbar from "../../components/Navbar";
 
-// Mock data for advertisements
-const mockAds: AdData[] = [
-  {
-    title: "Japan Badu",
-    description: "asdfghjk",
-    price: "1200000",
-    location: {
-      name: "Colombo",
-      lat: 7.253391265869141,
-      lng: 80.34537506103516,
-      geohash: "tc31k23wn"
-    },
-    category: "Electronics & Technology",
-    userEmail: "user@example.com",
-    photoUrls: [
-      "https://fra.cloud.appwrite.io/v1/storage/buckets/689e169e00048e04c0be/files/689e2f1d003300b4ef55/view?project=689e16540020bd6ae70d",
-      "https://fra.cloud.appwrite.io/v1/storage/buckets/689e169e00048e04c0be/files/689e2f1d00336abdae32/view?project=689e16540020bd6ae70d"
-    ]
-  },
-  {
-    title: "iPhone 15 Pro",
-    description: "Brand new iPhone 15 Pro with 256GB storage",
-    price: "450000",
-    location: {
-      name: "Kandy",
-      lat: 7.2906,
-      lng: 80.6337,
-      geohash: "tc31k23wn"
-    },
-    category: "Electronics & Technology",
-    userEmail: "user@example.com",
-    photoUrls: [
-      "https://fra.cloud.appwrite.io/v1/storage/buckets/689e169e00048e04c0be/files/689e2f1d003300b4ef55/view?project=689e16540020bd6ae70d"
-    ]
-  },
-  {
-    title: "Gaming Laptop",
-    description: "High-performance gaming laptop with RTX 4070",
-    price: "850000",
-    location: {
-      name: "Galle",
-      lat: 6.0535,
-      lng: 80.2210,
-      geohash: "tc31k23wn"
-    },
-    category: "Electronics & Technology",
-    userEmail: "user@example.com",
-    photoUrls: [
-      "https://fra.cloud.appwrite.io/v1/storage/buckets/689e169e00048e04c0be/files/689e2f1d003300b4ef55/view?project=689e16540020bd6ae70d"
-    ]
-  }
-];
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  userLocation?: string;
+  whatsappNumber?: string;
+}
+
+interface UserAdsResponse {
+  message: string;
+  userEmail: string;
+  totalAds: number;
+  ads: Ad[];
+}
 
 export default function Profile() {
-  const [user, setUser] = useState<{
-    username: string;
-    email: string;
-    userLocation?: string;
-    whatsappNumber?: string;
-  } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userAds, setUserAds] = useState<AdData[]>(mockAds);
+  const [userAds, setUserAds] = useState<AdData[]>([]);
   const [selectedAd, setSelectedAd] = useState<AdData | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showBoostModal, setShowBoostModal] = useState(false);
@@ -88,19 +44,15 @@ export default function Profile() {
   useEffect(() => {
     async function fetchProfile() {
       try {
-        // Mock user data for now
-        setUser({
-          username: "John Doe",
-          email: "john.doe@example.com",
-          userLocation: "Colombo, Sri Lanka",
-          whatsappNumber: "+94771234567"
-        });
-        // In real implementation:
-        // const u = await apiService.getProfile();
-        // setUser(u);
-        // const adsResponse = await apiService.getUserAdvertisements();
-        // if (adsResponse.success) setUserAds(adsResponse.data || []);
-      } catch {
+        const userResponse = await apiService.getProfile();
+        setUser(userResponse);
+        
+        const adsResponse: UserAdsResponse = await apiService.getUserAdvertisements();
+        if (adsResponse.data.ads) {
+          setUserAds(adsResponse.data.ads);
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error);
         navigate("/signin");
       } finally {
         setLoading(false);
@@ -109,36 +61,8 @@ export default function Profile() {
     fetchProfile();
   }, [navigate]);
 
-  const getCoordinatesFromLocation = (location?: string): [number, number] => {
-    if (!location) return [6.9271, 79.8612]; 
-    return [6.9271, 79.8612]; 
-  };
 
-  const customIcon = L.divIcon({
-    className: "custom-marker",
-    html: `<div style="background-color: #374151; width: 20px; height: 20px; border-radius: 50%; border: 3px solid #9CA3AF; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-  });
 
-  const SimpleMap = ({ location }: { location: string }) => {
-    const coordinates = getCoordinatesFromLocation(location);
-
-    return (
-      <MapContainer
-        center={coordinates}
-        zoom={13}
-        style={{ height: "192px", width: "100%", borderRadius: "8px" }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Marker position={coordinates} icon={customIcon}>
-          <Popup>Your Location</Popup>
-        </Marker>
-      </MapContainer>
-    );
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('jwt');
@@ -150,16 +74,10 @@ export default function Profile() {
     
     setActionLoading(true);
     try {
-      // In real implementation:
-      // const response = await apiService.deleteAdvertisement(selectedAd.id);
-      // if (response.success) {
-      //   setUserAds(prev => prev.filter(ad => ad.id !== selectedAd.id));
-      //   await sendEmailNotification('delete', selectedAd);
-      // }
-      
-      // Mock implementation
-      setUserAds(prev => prev.filter(ad => ad.title !== selectedAd.title));
-      await mockSendEmail('delete', selectedAd);
+      const response = await apiService.deleteAdvertisement(selectedAd.id.toString());
+      if (response.success) {
+        setUserAds(prev => prev.filter(ad => ad.id !== selectedAd.id));
+      }
       
       setShowDeleteModal(false);
       setSelectedAd(null);
@@ -175,15 +93,10 @@ export default function Profile() {
     
     setActionLoading(true);
     try {
-      // In real implementation:
-      // const response = await apiService.boostAdvertisement(selectedAd.id);
-      // if (response.success) {
-      //   await sendEmailNotification('boost', selectedAd);
-      // }
-      
-      // Mock implementation
-      await mockSendEmail('boost', selectedAd);
-      
+      const response = await apiService.boostAdvertisement(selectedAd.id.toString());
+      if (response.success) {
+        console.log('Advertisement boosted successfully:', response.data);
+      }
       setShowBoostModal(false);
       setSelectedAd(null);
     } catch (error) {
@@ -194,21 +107,8 @@ export default function Profile() {
   };
 
   const handleUpdateAd = (ad: AdData) => {
-    // Navigate to edit page with ad data
-    navigate(`/edit-ad/${ad.title}`, { state: { adData: ad } });
-  };
-
-  const mockSendEmail = async (action: 'delete' | 'boost', ad: AdData) => {
-    // Mock email sending with JWT authentication
-    const token = localStorage.getItem('jwt');
-    console.log(`Sending ${action} email for ad: ${ad.title}`, {
-      token,
-      userEmail: user?.email,
-      adTitle: ad.title
-    });
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Navigate to update page with ad ID
+    navigate(`/ads/update/${ad.id}`, { state: { adData: ad } });
   };
 
   const formatPrice = (price: string) => {
@@ -216,7 +116,15 @@ export default function Profile() {
       style: 'currency',
       currency: 'LKR',
       minimumFractionDigits: 0
-    }).format(parseInt(price));
+    }).format(parseFloat(price));
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   if (loading) {
@@ -236,20 +144,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col font-sans relative overflow-x-hidden">
       {/* Header */}
-      <header className="flex justify-between items-center px-6 py-5 border-b border-gray-800 bg-gray-900/95 backdrop-blur-sm">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
-            <span className="text-gray-200 font-bold text-lg">A</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-100">AdNetwork</h1>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 text-gray-300 font-medium hover:text-gray-100 transition duration-200"
-        >
-          Logout
-        </button>
-      </header>
+      <Navbar />
 
       {/* Main Content */}
       <div className="flex-1 p-4">
@@ -259,61 +154,45 @@ export default function Profile() {
             <div className="lg:col-span-1">
               {/* Profile Card */}
               <div className="relative bg-gray-800/60 backdrop-blur-sm p-6 rounded-lg shadow-lg border border-gray-700/60 mb-6">
-            {/* Avatar & Info */}
-            <div className="flex flex-col items-center space-y-6">
-              <img
-                src={avatarUrl}
-                alt="Profile Avatar"
-                className="w-24 h-24 rounded-full border-2 border-gray-600 bg-gray-700 shadow-lg"
-              />
-              <div className="text-center">
-                <h2 className="text-2xl font-bold">{user.username}</h2>
-                <p className="text-gray-400 text-sm">AdNetwork Member</p>
-              </div>
-              <div className="space-y-3 text-left w-full">
-                <div className="flex items-center space-x-3 p-3 bg-gray-700/30 rounded-lg">
-                  <EnvelopeIcon className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <p className="text-gray-300 text-sm font-medium">Email</p>
-                    <p className="text-gray-400 text-xs">{user.email}</p>
+                {/* Avatar & Info */}
+                <div className="flex flex-col items-center space-y-6">
+                  <img
+                    src={avatarUrl}
+                    alt="Profile Avatar"
+                    className="w-24 h-24 rounded-full border-2 border-gray-600 bg-gray-700 shadow-lg"
+                  />
+                  <div className="text-center">
+                    <h2 className="text-2xl font-bold">{user.username}</h2>
+                    <p className="text-gray-400 text-sm">AdNetwork Member</p>
                   </div>
-                </div>
-                {user.whatsappNumber && (
-                  <div className="flex items-center space-x-3 p-3 bg-gray-700/30 rounded-lg">
-                    <PhoneIcon className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-gray-300 text-sm font-medium">WhatsApp</p>
-                      <p className="text-gray-400 text-xs">{user.whatsappNumber}</p>
+                  <div className="space-y-3 text-left w-full">
+                    <div className="flex items-center space-x-3 p-3 bg-gray-700/30 rounded-lg">
+                      <EnvelopeIcon className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <p className="text-gray-300 text-sm font-medium">Email</p>
+                        <p className="text-gray-400 text-xs">{user.email}</p>
+                      </div>
                     </div>
+                    {user.whatsappNumber && (
+                      <div className="flex items-center space-x-3 p-3 bg-gray-700/30 rounded-lg">
+                        <PhoneIcon className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <p className="text-gray-300 text-sm font-medium">WhatsApp</p>
+                          <p className="text-gray-400 text-xs">{user.whatsappNumber}</p>
+                        </div>
+                      </div>
+                    )}
+                    {user.userLocation && (
+                      <div className="flex items-center space-x-3 p-3 bg-gray-700/30 rounded-lg">
+                        <MapPinIcon className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <p className="text-gray-300 text-sm font-medium">Location</p>
+                          <p className="text-gray-400 text-xs">{user.userLocation}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-                {user.userLocation && (
-                  <div className="flex items-center space-x-3 p-3 bg-gray-700/30 rounded-lg">
-                    <MapPinIcon className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-gray-300 text-sm font-medium">Location</p>
-                      <p className="text-gray-400 text-xs">{user.userLocation}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
                 </div>
-              </div>
-
-              {/* Map Card */}
-              <div className="relative bg-gray-800/60 backdrop-blur-sm p-6 rounded-lg shadow-lg border border-gray-700/60">
-                <div className="text-center mb-4">
-                  <h3 className="text-lg font-bold text-gray-100">Your Location</h3>
-                  <p className="text-gray-400 text-sm">This helps buyers find items near you</p>
-                </div>
-                {user.userLocation ? (
-                  <SimpleMap location={user.userLocation} />
-                ) : (
-                  <div className="w-full h-48 bg-gray-700/50 rounded-lg flex flex-col items-center justify-center">
-                    <MapPinIcon className="w-12 h-12 text-gray-500" />
-                    <p className="text-gray-400 text-sm">No location set</p>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -326,7 +205,7 @@ export default function Profile() {
                     <p className="text-gray-400 text-sm">{userAds.length} active listings</p>
                   </div>
                   <button
-                    onClick={() => navigate('/create-ad')}
+                    onClick={() => navigate('/ads/add')}
                     className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg transition-colors duration-200 text-sm font-medium"
                   >
                     + New Ad
@@ -341,7 +220,7 @@ export default function Profile() {
                     <h4 className="text-lg font-medium text-gray-300 mb-2">No advertisements yet</h4>
                     <p className="text-gray-400 text-sm mb-4">Start selling by creating your first advertisement</p>
                     <button
-                      onClick={() => navigate('/create-ad')}
+                      onClick={() => navigate('/ads/add')}
                       className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg transition-colors duration-200"
                     >
                       Create Advertisement
@@ -349,13 +228,13 @@ export default function Profile() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {userAds.map((ad, index) => (
-                      <div key={index} className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/50">
+                    {userAds.map((ad) => (
+                      <div key={ad.id} className="bg-gray-700/30 rounded-lg p-4 border border-gray-600/50">
                         <div className="flex items-start gap-4">
                           {/* Image */}
                           <div className="flex-shrink-0">
                             <img
-                              src={ad.photoUrls[0] || '/placeholder-image.jpg'}
+                              src={ad.photoUrls && ad.photoUrls.length > 0 ? ad.photoUrls[0] : '/placeholder-image.jpg'}
                               alt={ad.title}
                               className="w-16 h-16 object-cover rounded-lg bg-gray-600"
                               onError={(e) => {
@@ -374,15 +253,21 @@ export default function Profile() {
                                 <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                                   <span className="flex items-center gap-1">
                                     <MapPinIcon className="w-3 h-3" />
-                                    {ad.location.name}
+                                    {ad.location?.name || 'Location not specified'}
                                   </span>
                                   <span>{ad.category}</span>
+                                  {ad.date && (
+                                    <span>{formatDate(ad.date)}</span>
+                                  )}
                                 </div>
                               </div>
                               
                               <div className="flex items-center gap-2 ml-4">
                                 <div className="text-right">
                                   <div className="font-semibold text-gray-100">{formatPrice(ad.price)}</div>
+                                  {ad.sellerPhone && (
+                                    <div className="text-xs text-gray-400">{ad.sellerPhone}</div>
+                                  )}
                                 </div>
                                 
                                 {/* Actions Menu */}
@@ -547,10 +432,10 @@ export default function Profile() {
                 as={Fragment}
                 enter="ease-out duration-300"
                 enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
+                enterTo="transform opacity-100 scale-100"
                 leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-gray-800 p-6 text-left align-middle shadow-xl transition-all border border-gray-700">
                   <div className="flex items-center gap-3 mb-4">
@@ -562,19 +447,20 @@ export default function Profile() {
                     </Dialog.Title>
                   </div>
 
-                  <div className="mb-6">
-                    <p className="text-sm text-gray-400 mb-3">
-                      Boost "{selectedAd?.title}" to increase its visibility and reach more potential buyers.
-                    </p>
-                    <div className="bg-gray-700/50 rounded-lg p-3">
-                      <h4 className="text-sm font-medium text-gray-200 mb-2">Boost Benefits:</h4>
-                      <ul className="text-xs text-gray-400 space-y-1">
-                        <li>• Higher placement in search results</li>
-                        <li>• Featured in category listings</li>
-                        <li>• Email notification sent to confirm boost</li>
-                      </ul>
-                    </div>
-                  </div>
+                 <div className="mb-6">
+  <p className="text-sm text-gray-400 mb-3">
+    Boost "{selectedAd?.title}" to reach more potential buyers through WhatsApp.
+  </p>
+  <div className="bg-gray-700/50 rounded-lg p-3">
+    <h4 className="text-sm font-medium text-gray-200 mb-2">Boost Benefits:</h4>
+    <ul className="text-xs text-gray-400 space-y-1">
+      <li>• Your ad is sent directly to users via our WhatsApp channel</li>
+      <li>• Increased visibility through direct messaging</li>
+      <li>• Higher chance of getting inquiries faster</li>
+    </ul>
+  </div>
+</div>
+
 
                   <div className="flex gap-3 justify-end">
                     <button

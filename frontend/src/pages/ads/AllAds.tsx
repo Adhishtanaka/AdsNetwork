@@ -6,89 +6,10 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import Navbar from "../../components/Navbar";
-
-interface Location {
-  name: string;
-  lat: number;
-  lng: number;
-  geohash: string;
-}
-
-interface Ad {
-  title: string;
-  description: string;
-  price: string;
-  location: Location;
-  category: string;
-  userEmail: string;
-  photoUrls: string[];
-  date?: string;
-}
-
-// Simple geohash utility functions
-const BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz";
-
-function encodeGeohash(lat: number, lng: number, precision: number = 9): string {
-  const latRange = [-90, 90];
-  const lngRange = [-180, 180];
-  let geohash = "";
-  let bits = 0;
-  let bit = 0;
-  let isEven = true;
-
-  while (geohash.length < precision) {
-    if (isEven) {
-      const mid = (lngRange[0] + lngRange[1]) / 2;
-      if (lng >= mid) {
-        bit = (bit << 1) + 1;
-        lngRange[0] = mid;
-      } else {
-        bit = bit << 1;
-        lngRange[1] = mid;
-      }
-    } else {
-      const mid = (latRange[0] + latRange[1]) / 2;
-      if (lat >= mid) {
-        bit = (bit << 1) + 1;
-        latRange[0] = mid;
-      } else {
-        bit = bit << 1;
-        latRange[1] = mid;
-      }
-    }
-
-    isEven = !isEven;
-    bits++;
-
-    if (bits === 5) {
-      geohash += BASE32[bit];
-      bits = 0;
-      bit = 0;
-    }
-  }
-
-  return geohash;
-}
-
-function getGeohashNeighbors(geohash: string, precision: number): string[] {
-  const baseGeohash = geohash.substring(0, precision);
-  // This is a simplified approach - in production you'd want proper neighbor calculation
-  const neighbors = [baseGeohash];
-  
-  // Add some basic neighboring geohashes by modifying the last character
-  const lastChar = baseGeohash[baseGeohash.length - 1];
-  const lastCharIndex = BASE32.indexOf(lastChar);
-  
-  // Add neighbors by incrementing/decrementing the last character
-  for (let i = -2; i <= 2; i++) {
-    if (i === 0) continue;
-    const newIndex = (lastCharIndex + i + BASE32.length) % BASE32.length;
-    const neighbor = baseGeohash.slice(0, -1) + BASE32[newIndex];
-    neighbors.push(neighbor);
-  }
-  
-  return neighbors;
-}
+import ngeohash from "ngeohash";
+import { apiService } from "../../services/api";
+import type { Ad } from "../../constants/types";
+import { Link } from "react-router";
 
 export default function AllAdsPage() {
   const [search, setSearch] = useState("");
@@ -99,6 +20,7 @@ export default function AllAdsPage() {
   const [geohashPrecision, setGeohashPrecision] = useState(5);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [userGeohash, setUserGeohash] = useState("");
+  const [ads, setAds] = useState<Ad[]>([]);
 
   const categories = [
     "Electronics & Technology",
@@ -111,80 +33,20 @@ export default function AllAdsPage() {
     "Jobs & Employment",
   ];
 
-  // Mock data using your structure
-  const ads: Ad[] = [
-    {
-      title: "Japan Badu",
-      description: "asdfghjk",
-      price: "1200000",
-      location: {
-        name: "Colombo",
-        lat: 7.253391265869141,
-        lng: 80.34537506103516,
-        geohash: "tc31k23wn"
-      },
-      category: "Electronics & Technology",
-      userEmail: "user1@example.com",
-      photoUrls: [
-        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80",
-        "https://images.unsplash.com/photo-1518773553398-650c184e0bb3?auto=format&fit=crop&w=400&q=80"
-      ],
-      date: "2025-08-15"
-    },
-    {
-      title: "Toyota Axio 2015",
-      description: "Well maintained vehicle in excellent condition",
-      price: "5400000",
-      location: {
-        name: "Kandy",
-        lat: 7.2906,
-        lng: 80.6337,
-        geohash: "tc31k45wn"
-      },
-      category: "Vehicles & Transport",
-      userEmail: "seller2@example.com",
-      photoUrls: [
-        "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=400&q=80"
-      ],
-      date: "2025-08-14"
-    },
-    {
-      title: "MacBook Pro M2",
-      description: "Lightly used MacBook Pro M2. 16GB RAM, 512GB SSD. No scratches.",
-      price: "520000",
-      location: {
-        name: "Galle",
-        lat: 6.0535,
-        lng: 80.2210,
-        geohash: "tc2qk23wn"
-      },
-      category: "Electronics & Technology",
-      userEmail: "techseller@example.com",
-      photoUrls: [
-        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=80",
-        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80"
-      ],
-      date: "2025-08-13"
-    },
-    {
-      title: "iPhone 14 Pro",
-      description: "Almost new iPhone 14 Pro in excellent condition",
-      price: "380000",
-      location: {
-        name: "Kalutara",
-        lat: 6.5854,
-        lng: 79.9607,
-        geohash: "tc2mk23wn"
-      },
-      category: "Electronics & Technology",
-      userEmail: "phoneuser@example.com",
-      photoUrls: [
-        "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=400&q=80"
-      ],
-      date: "2025-08-12"
-    }
-  ];
 
+
+  const fetchAds = async () => {
+    try {
+      const response = await apiService.getAdvertisements();
+      setAds(response.data.ads); 
+    } catch (error) {
+      console.error("Error fetching ads:", error);
+      setAds([]); 
+    }
+  };
+  
+  
+  
   // Get user location
   const getUserLocation = () => {
     if (navigator.geolocation) {
@@ -192,24 +54,25 @@ export default function AllAdsPage() {
         (position) => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ lat: latitude, lng: longitude });
-          const geohash = encodeGeohash(latitude, longitude, 9);
+          const geohash = ngeohash.encode(latitude, longitude, 9);
           setUserGeohash(geohash);
         },
         (error) => {
           console.error("Error getting location:", error);
           // Fallback to Kalutara location
           setUserLocation({ lat: 6.5854, lng: 79.9607 });
-          setUserGeohash(encodeGeohash(6.5854, 79.9607, 9));
+          setUserGeohash(ngeohash.encode(6.5854, 79.9607, 9));
         }
       );
     } else {
       // Fallback to Kalutara location
       setUserLocation({ lat: 6.5854, lng: 79.9607 });
-      setUserGeohash(encodeGeohash(6.5854, 79.9607, 9));
+      setUserGeohash(ngeohash.encode(6.5854, 79.9607, 9));
     }
   };
 
   useEffect(() => {
+    fetchAds();
     getUserLocation();
   }, []);
 
@@ -224,7 +87,7 @@ export default function AllAdsPage() {
     if (locationEnabled && userGeohash) {
       const userGeohashPrefix = userGeohash.substring(0, geohashPrecision);
       const adGeohashPrefix = ad.location.geohash.substring(0, geohashPrecision);
-      const neighbors = getGeohashNeighbors(userGeohashPrefix, geohashPrecision);
+      const neighbors = ngeohash.encode(userGeohashPrefix, geohashPrecision);
       matchesLocation = neighbors.includes(adGeohashPrefix);
     }
     
@@ -421,55 +284,57 @@ export default function AllAdsPage() {
           {/* Ads Grid */}
           <main className="flex-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {sortedAds.map((ad, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden group hover:border-gray-500 transition-all duration-200 cursor-pointer"
-                >
-                  <div className="relative">
-                    <img
-                      src={ad.photoUrls[0] || "https://via.placeholder.com/400x300?text=No+Image"}
-                      alt={ad.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
-                      onError={(e) => {
-                        e.currentTarget.src = "https://via.placeholder.com/400x300?text=No+Image";
-                      }}
-                    />
-                    <span className="absolute top-2 left-2 bg-gray-900/90 px-2 py-1 rounded text-sm font-semibold text-white">
-                      {formatPrice(ad.price)}
-                    </span>
-                    
-                    {ad.photoUrls.length > 1 && (
-                      <span className="absolute bottom-2 right-2 bg-gray-900/80 px-2 py-1 rounded text-xs text-gray-300">
-                        +{ad.photoUrls.length - 1} more
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h4 className="font-semibold truncate text-gray-100 mb-1">{ad.title}</h4>
-                    <p className="text-gray-400 text-sm mb-2">{ad.category}</p>
-                    <p className="text-gray-300 text-sm line-clamp-2 mb-3 leading-relaxed">
-                      {ad.description}
-                    </p>
-                    <div className="flex items-center justify-between text-sm text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <MapPinIcon className="w-4 h-4" />
-                        {ad.location.name}
-                      </span>
-                      {ad.date && (
-                        <span className="text-xs">
-                          {new Date(ad.date).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                    {ad.userEmail && (
-                      <div className="mt-2 text-xs text-gray-500 truncate">
-                        By: {ad.userEmail.split('@')[0]}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+            {sortedAds.map((ad, index) => (
+  <Link
+    key={index}
+    to={`/browse-ads/${ad.id}`}
+    className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden group hover:border-gray-500 transition-all duration-200 cursor-pointer block"
+  >
+    <div className="relative">
+      <img
+        src={ad.photoUrls[0] || "https://via.placeholder.com/400x300?text=No+Image"}
+        alt={ad.title}
+        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+        onError={(e) => {
+          e.currentTarget.src = "https://via.placeholder.com/400x300?text=No+Image";
+        }}
+      />
+      <span className="absolute top-2 left-2 bg-gray-900/90 px-2 py-1 rounded text-sm font-semibold text-white">
+        {formatPrice(ad.price)}
+      </span>
+
+      {ad.photoUrls.length > 1 && (
+        <span className="absolute bottom-2 right-2 bg-gray-900/80 px-2 py-1 rounded text-xs text-gray-300">
+          +{ad.photoUrls.length - 1} more
+        </span>
+      )}
+    </div>
+    <div className="p-4">
+      <h4 className="font-semibold truncate text-gray-100 mb-1">{ad.title}</h4>
+      <p className="text-gray-400 text-sm mb-2">{ad.category}</p>
+      <p className="text-gray-300 text-sm line-clamp-2 mb-3 leading-relaxed">
+        {ad.description}
+      </p>
+      <div className="flex items-center justify-between text-sm text-gray-400">
+        <span className="flex items-center gap-1">
+          <MapPinIcon className="w-4 h-4" />
+          {ad.location.name}
+        </span>
+        {ad.date && (
+          <span className="text-xs">
+            {new Date(ad.date).toLocaleDateString()}
+          </span>
+        )}
+      </div>
+      {ad.userEmail && (
+        <div className="mt-2 text-xs text-gray-500 truncate">
+          By: {ad.userEmail.split('@')[0]}
+        </div>
+      )}
+    </div>
+  </Link>
+))}
+
             </div>
 
             {/* No results */}
@@ -485,14 +350,7 @@ export default function AllAdsPage() {
               </div>
             )}
 
-            {/* Load More */}
-            {sortedAds.length > 0 && (
-              <div className="text-center mt-10">
-                <button className="px-6 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors">
-                  Load More
-                </button>
-              </div>
-            )}
+          
           </main>
         </div>
       </div>

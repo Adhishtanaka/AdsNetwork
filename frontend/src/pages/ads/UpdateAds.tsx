@@ -99,7 +99,7 @@ export default function UpdateAdPage() {
         const response = await apiService.getAdvertisement(id);
         
         if (response.success && response.data) {
-          const ad = response.data;
+          const ad = response.data.ad;
           setOriginalAd(ad);
           setExistingPhotos(ad.photoUrls || []);
           
@@ -108,7 +108,7 @@ export default function UpdateAdPage() {
             title: ad.title,
             description: ad.description,
             price: ad.price,
-            location: ad.location.name,
+            location: ad.location?.name || "",
             category: ad.category,
             photos: [] // Start with empty photos, existing ones will be shown separately
           });

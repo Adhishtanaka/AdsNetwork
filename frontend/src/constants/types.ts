@@ -47,11 +47,14 @@ export interface SubmissionState {
 }
 
 export interface Comment {
-  id: string;
-  user: string;
-  text: string;
-  date: string;
+  id: number;           
+  userEmail: string;    
+  adId: number;         
+  sentiment: string;
+  description: string;  
+  createdAt: string;    
 }
+
 
 export interface Location {
   name: string;
@@ -61,6 +64,7 @@ export interface Location {
 }
 
 export interface Ad {
+  id:number
   title: string;
   description: string;
   price: string;
@@ -70,4 +74,18 @@ export interface Ad {
   photoUrls: string[];
   date?: string;
   comments?: Comment[];
+  sellerPhone?: string
 }
+
+export interface AdApiResponse {
+  message: string;
+  ads: Ad[];
+}
+
+export type CreateCommentRequest = {
+  ad_id: number;
+  sentiment: string;
+  description: string;
+};
+
+export type SentimentType = 'good' | 'bad' | 'neutral';

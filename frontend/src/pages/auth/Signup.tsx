@@ -7,7 +7,7 @@ export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userLocation, setUserLocation] = useState("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [error, setError] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
@@ -17,8 +17,12 @@ export default function Signup() {
     e.preventDefault();
     setError("");
     try {
-  await apiService.signup(name, email, password, userLocation, whatsappNumber);
-      navigate("/workflows");
+      if (!userLocation) {
+        setError("Please provide your location.");
+        return;
+      }
+      await apiService.signup(name, email, password, userLocation, whatsappNumber);
+      navigate("/signin");
     } catch (err: unknown) {
       let msg = "Signup failed";
       if (typeof err === "object" && err !== null) {
@@ -42,9 +46,7 @@ export default function Signup() {
         async (position) => {
           try {
             const { latitude, longitude } = position.coords;
-            // In a real app, you'd reverse geocode these coordinates
-            // For now, we'll just set a placeholder
-            setUserLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            setUserLocation({ lat: latitude, lng: longitude });
           } catch {
             setError("Failed to get location details");
           } finally {
@@ -153,9 +155,17 @@ export default function Signup() {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Your city or area"
-                    value={userLocation}
-                    onChange={e => setUserLocation(e.target.value)}
+                    placeholder="Your location (lat, lng)"
+                    value={userLocation ? `${userLocation.lat}, ${userLocation.lng}` : ""}
+                    onChange={e => {
+                      const val = e.target.value;
+                      const [lat, lng] = val.split(",").map(s => parseFloat(s.trim()));
+                      if (!isNaN(lat) && !isNaN(lng)) {
+                        setUserLocation({ lat, lng });
+                      } else {
+                        setUserLocation(null);
+                      }
+                    }}
                     className="flex-1 bg-gray-700/50 border border-gray-600 text-gray-100 p-3 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-gray-700 transition duration-200"
                   />
                   <button

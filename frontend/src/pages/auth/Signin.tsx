@@ -6,7 +6,7 @@ import { MapPinIcon } from "@heroicons/react/24/outline";
 export default function Signin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userLocation, setUserLocation] = useState("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
   const navigate = useNavigate();
@@ -15,7 +15,11 @@ export default function Signin() {
     e.preventDefault();
     setError("");
     try {
-  const res = await apiService.login(email, password, userLocation);
+      if (!userLocation) {
+        setError("Please provide your location.");
+        return;
+      }
+      const res = await apiService.login(email, password, userLocation);
       localStorage.setItem("jwt", res.token);
       localStorage.setItem("user", JSON.stringify(res.user));
       navigate("/profile");
@@ -42,9 +46,7 @@ export default function Signin() {
         async (position) => {
           try {
             const { latitude, longitude } = position.coords;
-            // In a real app, you'd reverse geocode these coordinates
-            // For now, we'll just set a placeholder
-            setUserLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            setUserLocation({ lat: latitude, lng: longitude });
           } catch {
             setError("Failed to get location details");
           } finally {
@@ -131,9 +133,17 @@ export default function Signin() {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Your location"
-                    value={userLocation}
-                    onChange={e => setUserLocation(e.target.value)}
+                    placeholder="Your location (lat, lng)"
+                    value={userLocation ? `${userLocation.lat}, ${userLocation.lng}` : ""}
+                    onChange={e => {
+                      const val = e.target.value;
+                      const [lat, lng] = val.split(",").map(s => parseFloat(s.trim()));
+                      if (!isNaN(lat) && !isNaN(lng)) {
+                        setUserLocation({ lat, lng });
+                      } else {
+                        setUserLocation(null);
+                      }
+                    }}
                     className="flex-1 bg-gray-700/50 border border-gray-600 text-gray-100 p-3 rounded-lg focus:outline-none focus:border-gray-500 focus:bg-gray-700 transition duration-200"
                   />
                   <button

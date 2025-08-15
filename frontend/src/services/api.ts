@@ -1,12 +1,13 @@
 import axios from 'axios';
 import { storageService } from './appwrite';
-import type { AdData, ApiResponse } from '../constants/types';
+import type { AdData, ApiResponse, CreateCommentRequest } from '../constants/types';
+import ngeohash from "ngeohash";
 
 class ApiService {
   private baseUrl: string;
 
   constructor() {
-    this.baseUrl = 'http://localhost:8080/';
+    this.baseUrl = 'http://localhost:8080';
   }
 
   private async request<T>(
@@ -41,25 +42,44 @@ class ApiService {
     }
   }
 
-  async login(email: string, password: string, location: string) {
-    const response = await axios.post(`${this.baseUrl}/auth/login`, { email, password, location });
-    return response.data;
-  }
+async login(email: string, password: string, location: { lat: number; lng: number }) {
+  const geohash = ngeohash.encode(location.lat, location.lng); // compute geohash
+  const response = await axios.post(`${this.baseUrl}/auth/login`, {
+    email,
+    password,
+    location: {
+      name: "",
+      lat: location.lat,
+      lng: location.lng,
+      geohash
+    }
+  });
+  return response.data;
+}
+
+  
 
   async signup(
     username: string,
     email: string,
     password: string,
-    location: string,
+    location: { lat: number; lng: number },
     phone: string
   ) {
+    const geohash = ngeohash.encode(location.lat, location.lng); // compute geohash
     const response = await axios.post(`${this.baseUrl}/auth/register`, {
       username,
       email,
       password,
-      location,
-      phone,
+      location: {
+        name: "",
+        lat: location.lat,
+        lng: location.lng,
+        geohash
+      },
+      phone
     });
+    
     return response.data;
   }
 
@@ -75,9 +95,13 @@ class ApiService {
   }
 
   async createAdvertisement(adData: AdData): Promise<ApiResponse<AdData>> {
+    const token = localStorage.getItem('jwt');
     return this.request('/advertisements', {
       method: 'POST',
       body: JSON.stringify(adData),
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
     });
   }
 
@@ -87,7 +111,7 @@ class ApiService {
     minPrice?: number;
     maxPrice?: number;
     search?: string;
-  }): Promise<ApiResponse<AdData[]>> {
+  }): Promise<ApiResponse<any>> {
     const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -99,13 +123,17 @@ class ApiService {
     return this.request(endpoint);
   }
 
-  async getAdvertisement(id: string): Promise<ApiResponse<AdData>> {
+  async getAdvertisement(id: string): Promise<ApiResponse<Any>> {
     return this.request(`/advertisements/${id}`);
   }
 
   async updateAdvertisement(id: string, adData: Partial<AdData>): Promise<ApiResponse<AdData>> {
+    const token = localStorage.getItem('jwt');
     return this.request(`/advertisements/${id}`, {
       method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(adData),
     });
   }
@@ -122,7 +150,7 @@ class ApiService {
 
   async getUserAdvertisements(): Promise<ApiResponse<AdData[]>> {
     const token = localStorage.getItem('jwt');
-    return this.request('/user/advertisements', {
+    return this.request('/advertisements/my-ads', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -138,19 +166,15 @@ class ApiService {
       }
     });
   }
-
-  async sendEmailNotification(type: 'delete' | 'boost', adData: AdData): Promise<ApiResponse<void>> {
+  
+  async createComment(commentData: CreateCommentRequest){
     const token = localStorage.getItem('jwt');
-    return this.request('/notifications/email', {
+    return this.request('/comments', {
+      body:JSON.stringify(commentData),
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        type,
-        adData,
-        timestamp: new Date().toISOString()
-      })
+      }
     });
   }
 

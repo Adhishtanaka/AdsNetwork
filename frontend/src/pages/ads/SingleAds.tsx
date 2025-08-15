@@ -2,42 +2,39 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import type {Comment,Ad} from "../../constants/types"
+import type { Comment, Ad, SentimentType, CreateCommentRequest } from "../../constants/types"
+import { apiService } from "../../services/api";
+import { useNavigate, useParams } from 'react-router';
 
 export default function SingleAdPage() {
   const [ad, setAd] = useState<Ad | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [selectedSentiment, setSelectedSentiment] = useState<SentimentType>('neutral');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!id) {
+      navigate(-1);
+    }
+  }, [id, navigate]);
+
+  const fetchAds = async () => {
+    try {
+      const response = await apiService.getAdvertisement(id);
+      setAd(response.data.ad);
+      setComments(response.data.ad.comments)
+    } catch (error) {
+      console.error("Error fetching ads:", error);
+      setAd(null);
+      setComments([])
+    }
+  };
 
   useEffect(() => {
-    // Mock fetch using your data structure
-    const mockAd: Ad = {
-      title: "Japan Badu",
-      description: "asdfghjk - This is a great product in excellent condition. Perfect for daily use and comes with original accessories.",
-      price: "1200000",
-      location: {
-        name: "Colombo",
-        lat: 7.253391265869141,
-        lng: 80.34537506103516,
-        geohash: "tc31k23wn"
-      },
-      category: "Electronics & Technology",
-      userEmail: "seller@example.com",
-      photoUrls: [
-        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1400&q=80",
-        "https://images.unsplash.com/photo-1518773553398-650c184e0bb3?auto=format&fit=crop&w=1400&q=80",
-        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1400&q=80"
-      ],
-      date: "2025-08-15",
-      comments: [
-        { id: "c1", user: "buyer1", text: "Is this still available?", date: "2025-08-14" },
-        { id: "c2", user: "interested_buyer", text: "What's the condition like?", date: "2025-08-15" }
-      ]
-    };
-
-    setAd(mockAd);
-    setComments(mockAd.comments || []);
+    fetchAds();
   }, []);
 
   if (!ad) {
@@ -52,18 +49,30 @@ export default function SingleAdPage() {
     return `LKR ${parseInt(price).toLocaleString()}`;
   };
 
-  const handleAddComment = (e?: React.FormEvent) => {
+  const handleAddComment = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!newComment.trim()) return;
-    
-    const comment: Comment = {
-      id: `c_${Date.now()}`,
-      user: "You",
-      text: newComment.trim(),
-      date: new Date().toISOString().slice(0, 10)
-    };
-    setComments(prev => [comment, ...prev]);
-    setNewComment("");
+    if (!newComment.trim() || isSubmittingComment) return;
+
+    setIsSubmittingComment(true);
+
+    try {
+      const commentRequest: CreateCommentRequest = {
+        ad_id: parseInt(id!),
+        sentiment: selectedSentiment,
+        description: newComment.trim()
+      };
+
+      // Make API call to create comment
+      await apiService.createComment(commentRequest);
+      setNewComment("");
+      setSelectedSentiment('neutral');
+      await fetchAds();
+
+    } catch (error) {
+      console.error("Error creating comment:", error);
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
 
   const nextImage = () => {
@@ -82,9 +91,35 @@ export default function SingleAdPage() {
     return email.split('@')[0];
   };
 
+  const getSentimentIcon = (sentiment: SentimentType) => {
+    switch (sentiment) {
+      case 'good':
+        return '👍';
+      case 'bad':
+        return '👎';
+      case 'neutral':
+        return '😐';
+      default:
+        return '😐';
+    }
+  };
+
+  const getSentimentColor = (sentiment: SentimentType) => {
+    switch (sentiment) {
+      case 'good':
+        return 'text-green-400';
+      case 'bad':
+        return 'text-red-400';
+      case 'neutral':
+        return 'text-gray-400';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-           <Navbar/>
+      <Navbar />
       <div className="max-w-6xl mx-auto py-4 px-4">
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
@@ -120,8 +155,6 @@ export default function SingleAdPage() {
                 {formatPrice(ad.price)}
               </div>
             </div>
-
-            
           </div>
         </div>
 
@@ -140,7 +173,7 @@ export default function SingleAdPage() {
                   }}
                   className="w-full h-full object-cover"
                 />
-                
+
                 {/* Navigation arrows */}
                 {ad.photoUrls.length > 1 && (
                   <>
@@ -175,9 +208,8 @@ export default function SingleAdPage() {
                       <button
                         key={index}
                         onClick={() => goToImage(index)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
-                        }`}
+                        className={`w-2 h-2 rounded-full transition-all ${index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
+                          }`}
                       />
                     ))}
                   </div>
@@ -192,9 +224,8 @@ export default function SingleAdPage() {
                       <button
                         key={index}
                         onClick={() => goToImage(index)}
-                        className={`rounded-lg overflow-hidden border-2 hover:scale-105 transform transition-all ${
-                          index === currentImageIndex ? 'border-gray-500' : 'border-gray-700'
-                        }`}
+                        className={`rounded-lg overflow-hidden border-2 hover:scale-105 transform transition-all ${index === currentImageIndex ? 'border-gray-500' : 'border-gray-700'
+                          }`}
                       >
                         <img
                           src={photo}
@@ -251,7 +282,14 @@ export default function SingleAdPage() {
               </div>
 
               <div className="flex gap-2">
-                <button className="flex-1 px-3 py-2 rounded-xl bg-gray-600 hover:bg-gray-700 text-sm font-medium text-white transition-colors">
+                <button
+                  className="flex-1 px-3 py-2 rounded-xl bg-gray-600 hover:bg-gray-700 text-sm font-medium text-white transition-colors"
+                  onClick={() => {
+                    const phoneNumber = ad.sellerPhone;
+                    const whatsappURL = `https://wa.me/${phoneNumber}`;
+                    window.open(whatsappURL, '_blank');
+                  }}
+                >
                   Message
                 </button>
               </div>
@@ -288,70 +326,122 @@ export default function SingleAdPage() {
               </div>
             </div>
 
-            {/* Map preview (placeholder) */}
- <div className="bg-gray-800/50 rounded-2xl p-5 border border-gray-700/50 shadow-sm flex flex-col">
-      <h3 className="text-lg font-semibold text-white mb-3">Location</h3>
-      <div className="bg-gray-700 rounded-lg flex-1 overflow-hidden">
-        <MapContainer
-          center={[ad.location.lat, ad.location.lng]}
-          zoom={13}
-          className="w-full h-full"
-          style={{ minHeight: "200px" }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <Marker position={[ad.location.lat, ad.location.lng]}>
-            <Popup>{ad.location.name}</Popup>
-          </Marker>
-        </MapContainer>
-      </div>
-    </div>
+            {/* Map preview */}
+            <div className="bg-gray-800/50 rounded-2xl p-5 border border-gray-700/50 shadow-sm flex flex-col">
+              <h3 className="text-lg font-semibold text-white mb-3">Location</h3>
+              <div className="bg-gray-700 rounded-lg flex-1 overflow-hidden">
+                <MapContainer
+                  center={[ad.location.lat, ad.location.lng]}
+                  zoom={13}
+                  className="w-full h-full"
+                  style={{ minHeight: "200px" }}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  />
+                  <Marker position={[ad.location.lat, ad.location.lng]}>
+                    <Popup>{ad.location.name}</Popup>
+                  </Marker>
+                </MapContainer>
+              </div>
+            </div>
           </aside>
         </div>
 
-             {/* Comments */}
-            <div className="bg-gray-800/50 rounded-2xl my-4 p-5 border border-gray-700/50 shadow-sm">
-              <h3 className="text-lg font-semibold text-white mb-3">
-                Comments ({comments.length})
-              </h3>
+        {/* Enhanced Comments Section */}
+        <div className="bg-gray-800/50 rounded-2xl my-4 p-5 border border-gray-700/50 shadow-sm">
+          <h3 className="text-lg font-semibold text-white mb-3">
+            Comments ({comments.length})
+          </h3>
 
-              <form onSubmit={handleAddComment} className="flex gap-2 mb-4">
-                <input
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Write a comment..."
-                  className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-gray-600"
-                />
-                <button 
-                  type="submit" 
-                  className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white transition-colors"
-                >
-                  Send
-                </button>
-              </form>
-             
-              <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
-                {comments.length > 0 ? (
-                  comments.map((comment) => (
-                    <div key={comment.id} className="bg-gray-900/70 p-3 rounded-lg border border-gray-700">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm font-semibold text-gray-100">{comment.user}</div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(comment.date).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <p className="text-gray-300 text-sm">{comment.text}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-4">
-                    No comments yet. Be the first to comment!
-                  </div>
-                )}
+          {/* Comment Form with Sentiment Selection */}
+          <form onSubmit={handleAddComment} className="mb-6 space-y-3">
+            {/* Sentiment Selection */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-400 mr-2">How do you feel about this ad?</span>
+              <div className="flex gap-2">
+                {(['good', 'neutral', 'bad'] as SentimentType[]).map((sentiment) => (
+                  <button
+                    key={sentiment}
+                    type="button"
+                    onClick={() => setSelectedSentiment(sentiment)}
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${selectedSentiment === sentiment
+                      ? sentiment === 'good'
+                        ? 'bg-green-600 text-white'
+                        : sentiment === 'bad'
+                          ? 'bg-red-600 text-white'
+                          : 'bg-gray-600 text-white'
+                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      }`}
+                  >
+                    <span className="mr-1">{getSentimentIcon(sentiment)}</span>
+                    {sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}
+                  </button>
+                ))}
               </div>
-            </div></div>
+            </div>
+
+            {/* Comment Input */}
+            <div className="flex gap-2">
+              <input
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Write your comment..."
+                disabled={isSubmittingComment}
+                className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-gray-600 disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={isSubmittingComment || !newComment.trim()}
+                className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmittingComment ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+                    Sending
+                  </div>
+                ) : (
+                  'Send'
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Comments List */}
+          <div className="space-y-4 max-h-60 overflow-y-auto pr-2">
+            {comments.length > 0 ? (
+              comments.map((comment) => {
+                console.log(comment);
+                return (
+                  <div key={comment.id} className="bg-gray-900/70 p-3 rounded-lg border border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-semibold text-gray-100">{comment.userEmail}</div>
+                        {comment.sentiment && (
+                          <span className={`text-lg ${getSentimentColor(comment.sentiment as SentimentType)}`}>
+                            {getSentimentIcon(comment.sentiment as SentimentType)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(comment.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <p className="text-gray-300 text-sm">{comment.description}</p>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center text-gray-500 py-4">
+                No comments yet. Be the first to comment!
+              </div>
+            )}
+          </div>
+
+
+        </div>
+      </div>
     </div>
   );
 }
