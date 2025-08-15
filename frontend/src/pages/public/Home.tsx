@@ -5,6 +5,7 @@ import {
 } from "@heroicons/react/24/outline";
 import Navbar from "../../components/Navbar";
 import { Link } from "react-router";
+import Footer from "../../components/Footer";
 
 const locations = [
   "All Locations",
@@ -97,6 +98,7 @@ export default function Home() {
           </Link>
         </div>
       </section>
+      <Footer />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { Dialog, Transition, Menu } from "@headlessui/react";
 import type { Ad, AdData } from "../../constants/types";
 import "leaflet/dist/leaflet.css";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 interface User {
   id: number;
@@ -62,12 +63,6 @@ export default function Profile() {
   }, [navigate]);
 
 
-
-
-  const handleLogout = () => {
-    localStorage.removeItem('jwt');
-    navigate("/signin");
-  };
 
   const handleDeleteAd = async () => {
     if (!selectedAd) return;
@@ -343,7 +338,7 @@ export default function Profile() {
           </div>
         </div>
       </div>
-
+     <Footer />
       {/* Delete Confirmation Modal */}
       <Transition appear show={showDeleteModal} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setShowDeleteModal(false)}>

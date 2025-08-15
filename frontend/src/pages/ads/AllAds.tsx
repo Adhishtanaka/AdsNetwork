@@ -10,6 +10,7 @@ import ngeohash from "ngeohash";
 import { apiService } from "../../services/api";
 import type { Ad } from "../../constants/types";
 import { Link } from "react-router";
+import Footer from "../../components/Footer";
 
 export default function AllAdsPage() {
   const [search, setSearch] = useState("");
@@ -355,10 +356,7 @@ export default function AllAdsPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-800 py-6 text-center text-gray-500 text-sm">
-        © 2025 AdNetwork. All rights reserved.
-      </footer>
+     <Footer />
 
   <style>{`
         .slider::-webkit-slider-thumb {
