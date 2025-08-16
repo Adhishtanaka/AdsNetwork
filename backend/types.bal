@@ -147,3 +147,41 @@ public type CommentInfo record {|
     string description;
     string createdAt;
 |};
+
+// Chat message type for conversation history
+public type ChatMessage record {|
+    string role; // "user" or "assistant"
+    string content;
+    string? timestamp;
+|};
+
+// Updated chat request type with conversation history
+public type ChatRequest record {|
+    string message;
+    ChatMessage[]? conversationHistory;
+|};
+
+// Chat response type with updated conversation
+public type ChatResponse record {|
+    string reply;
+    string status;
+    boolean messageProcessed;
+    ChatMessage[] conversationHistory;
+|};
+
+// Gemini API response types
+public type GeminiResponse record {|
+    GeminiCandidate[] candidates;
+|};
+
+public type GeminiCandidate record {|
+    GeminiContent content;
+|};
+
+public type GeminiContent record {|
+    GeminiPart[] parts;
+|};
+
+public type GeminiPart record {|
+    string text;
+|};

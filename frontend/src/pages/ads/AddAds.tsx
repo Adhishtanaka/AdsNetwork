@@ -15,6 +15,8 @@ import LocationPicker from "../../components/MapPicker";
 import { apiService } from "../../services/api";
 import Navbar from "../../components/Navbar";
 import type { FormDataType, Photo, LocationData, SubmissionState } from "../../constants/types";
+import { locations,categories } from "../../constants/data";
+
 
 export default function AddAdPage() {
   const [formData, setFormData] = useState<FormDataType>({
@@ -35,46 +37,6 @@ export default function AddAdPage() {
     error: null,
     progress: ''
   });
-
-  const categories = [
-    "Electronics & Technology",
-    "Vehicles & Transport",
-    "Real Estate",
-    "Fashion & Beauty",
-    "Home & Garden",
-    "Sports & Recreation",
-    "Business Services",
-    "Jobs & Employment"
-  ];
-
-const locations = [
-  "Colombo",
-  "Gampaha",
-  "Kalutara",
-  "Kandy",
-  "Matale",
-  "Nuwara Eliya",
-  "Galle",
-  "Matara",
-  "Hambantota",
-  "Jaffna",
-  "Kilinochchi",
-  "Mannar",
-  "Vavuniya",
-  "Mullaitivu",
-  "Batticaloa",
-  "Ampara",
-  "Trincomalee",
-  "Kurunegala",
-  "Puttalam",
-  "Anuradhapura",
-  "Polonnaruwa",
-  "Badulla",
-  "Monaragala",
-  "Ratnapura",
-  "Kegalle"
-];
-
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
