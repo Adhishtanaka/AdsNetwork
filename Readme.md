@@ -3,7 +3,7 @@
 AdsNetwork is a full-stack advertising platform featuring a **Ballerina backend** and a **React frontend**.
 It provides a secure, scalable, and developer-friendly environment for managing ads, users, and analytics.
 
-<img src="./screenshot/ss.png" width="600" alt="Website"/>
+<img src="./screenshot/image.png" width="600" alt="Website"/>
 
 ## Features
 
