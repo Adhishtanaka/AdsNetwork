@@ -44,6 +44,8 @@ serverPort = 8080
 # JWT Configuration
 jwtSecret = "<your-jwt-secret>"
 jwtExpiryTime = 86400.0 # 24 hours in seconds
+
+geminiApiKey="<your-gemini-api-key>"
 ```
 
 ### **Run the Backend**

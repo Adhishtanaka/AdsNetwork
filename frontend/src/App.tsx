@@ -8,38 +8,41 @@ import AddAdPage from './pages/ads/AddAds';
 import SearchAds from './pages/ads/AllAds';
 import SingleAdPage from './pages/ads/SingleAds';
 import UpdateAdPage from './pages/ads/UpdateAds';
+import ChatWidget from './components/Chatbot';
 
 function App() {
   return (
-      <div className="App">
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/signin" element={<Signin />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/ads/add" element={
-              <ProtectedRoute>
+    <div className="App">
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/signin" element={<Signin />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path='/browse-ads' element={<SearchAds />} />
+          <Route path='/browse-ads/:id' element={<SingleAdPage/>}/>
+          <Route path="/ads/add" element={
+            <ProtectedRoute>
               <AddAdPage />
-              </ProtectedRoute>
-              } />
-              <Route path="/ads/update/:id" element={
-              <ProtectedRoute>
+            </ProtectedRoute>
+          } />
+          <Route path="/ads/update/:id" element={
+            <ProtectedRoute>
               <UpdateAdPage />
-              </ProtectedRoute>
-              } />
-            <Route path='/browse-ads' element={<SearchAds />} />
-            <Route path='/browse-ads/:id' element={<SingleAdPage/>}/>
-            <Route path='/profile' element={
-              <ProtectedRoute>
-                <Profile />
-              // </ProtectedRoute>
-            } />
-            
-          </Routes>
-        </main>
-      </div>
+            </ProtectedRoute>
+          } />
+          <Route path='/profile' element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />          
+        </Routes>
+
+        <ChatWidget />
+      </main>
+    </div>
   );
 }
 
 export default App;
+
 
