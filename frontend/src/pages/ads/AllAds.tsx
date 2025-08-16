@@ -4,6 +4,7 @@ import {
   MapPinIcon,
   AdjustmentsHorizontalIcon,
   XMarkIcon,
+  ChatBubbleLeftEllipsisIcon,
 } from "@heroicons/react/24/outline";
 import Navbar from "../../components/Navbar";
 import ngeohash from "ngeohash";
@@ -34,7 +35,39 @@ export default function AllAdsPage() {
     "Jobs & Employment",
   ];
 
+  // Calculate sentiment score for an ad based on comments
+  const calculateSentimentScore = (ad: Ad) => {
+    if (!ad.comments || ad.comments.length === 0) return 0;
+    
+    const sentimentWeights = {
+      'good': 1,
+      'neutral': 0,
+      'bad': -1
+    };
+    
+    const totalScore = ad.comments.reduce((score, comment) => {
+      return score + (sentimentWeights[comment.sentiment] || 0);
+    }, 0);
+    
+    // Return average sentiment score
+    return totalScore / ad.comments.length;
+  };
 
+  // Get sentiment badge info
+  const getSentimentBadge = (ad: Ad) => {
+    if (!ad.comments || ad.comments.length === 0) return null;
+    
+    const score = calculateSentimentScore(ad);
+    const commentCount = ad.comments.length;
+    
+    if (score > 0.5) {
+      return { color: 'bg-green-600', text: `${commentCount} positive`, textColor: 'text-green-100' };
+    } else if (score < -0.5) {
+      return { color: 'bg-red-600', text: `${commentCount} negative`, textColor: 'text-red-100' };
+    } else {
+      return { color: 'bg-yellow-600', text: `${commentCount} mixed`, textColor: 'text-yellow-100' };
+    }
+  };
 
   const fetchAds = async () => {
     try {
@@ -45,8 +78,6 @@ export default function AllAdsPage() {
       setAds([]); 
     }
   };
-  
-  
   
   // Get user location
   const getUserLocation = () => {
@@ -106,6 +137,20 @@ export default function AllAdsPage() {
         const distA = Math.sqrt(Math.pow(a.location.lat - userLocation.lat, 2) + Math.pow(a.location.lng - userLocation.lng, 2));
         const distB = Math.sqrt(Math.pow(b.location.lat - userLocation.lat, 2) + Math.pow(b.location.lng - userLocation.lng, 2));
         return distA - distB;
+      case "BestReviewed":
+        const scoreA = calculateSentimentScore(a);
+        const scoreB = calculateSentimentScore(b);
+        // Sort by sentiment score (best first), then by comment count as tiebreaker
+        if (scoreA !== scoreB) return scoreB - scoreA;
+        return (b.comments?.length || 0) - (a.comments?.length || 0);
+      case "WorstReviewed":
+        const scoreWorstA = calculateSentimentScore(a);
+        const scoreWorstB = calculateSentimentScore(b);
+        // Sort by sentiment score (worst first), then by comment count as tiebreaker
+        if (scoreWorstA !== scoreWorstB) return scoreWorstA - scoreWorstB;
+        return (b.comments?.length || 0) - (a.comments?.length || 0);
+      case "MostCommented":
+        return (b.comments?.length || 0) - (a.comments?.length || 0);
       case "Newest":
       default:
         return new Date(b.date || "").getTime() - new Date(a.date || "").getTime();
@@ -149,7 +194,7 @@ export default function AllAdsPage() {
             Advanced
           </button>
 
-          {/* Sort Filter */}
+          {/* Sort Filter - Enhanced with sentiment options */}
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
@@ -159,6 +204,9 @@ export default function AllAdsPage() {
             <option value="PriceLow">Price: Low to High</option>
             <option value="PriceHigh">Price: High to Low</option>
             <option value="Nearest">Nearest First</option>
+            <option value="BestReviewed">Best Reviewed</option>
+            <option value="WorstReviewed">Worst Reviewed</option>
+            <option value="MostCommented">Most Commented</option>
           </select>
 
           {/* Search Bar */}
@@ -264,6 +312,25 @@ export default function AllAdsPage() {
                     </div>
                   )}
 
+                  {/* Sentiment Filter Summary */}
+                  <div className="pt-4 border-t border-gray-700">
+                    <h4 className="text-sm font-medium text-gray-300 mb-3">Review Summary</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between text-gray-400">
+                        <span>Total Ads with Reviews:</span>
+                        <span>{ads.filter(ad => ad.comments && ad.comments.length > 0).length}</span>
+                      </div>
+                      <div className="flex justify-between text-green-400">
+                        <span>Positive Reviews:</span>
+                        <span>{ads.filter(ad => calculateSentimentScore(ad) > 0.5).length}</span>
+                      </div>
+                      <div className="flex justify-between text-red-400">
+                        <span>Negative Reviews:</span>
+                        <span>{ads.filter(ad => calculateSentimentScore(ad) < -0.5).length}</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="pt-4 border-t border-gray-700">
                     <button
                       onClick={() => {
@@ -271,6 +338,7 @@ export default function AllAdsPage() {
                         setCategory("");
                         setLocationEnabled(false);
                         setGeohashPrecision(5);
+                        setSort("Newest");
                       }}
                       className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
                     >
@@ -285,57 +353,63 @@ export default function AllAdsPage() {
           {/* Ads Grid */}
           <main className="flex-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sortedAds.map((ad, index) => (
-  <Link
-    key={index}
-    to={`/browse-ads/${ad.id}`}
-    className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden group hover:border-gray-500 transition-all duration-200 cursor-pointer block"
-  >
-    <div className="relative">
-      <img
-        src={ad.photoUrls[0] || "https://via.placeholder.com/400x300?text=No+Image"}
-        alt={ad.title}
-        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
-        onError={(e) => {
-          e.currentTarget.src = "https://via.placeholder.com/400x300?text=No+Image";
-        }}
-      />
-      <span className="absolute top-2 left-2 bg-gray-900/90 px-2 py-1 rounded text-sm font-semibold text-white">
-        {formatPrice(ad.price)}
-      </span>
+              {sortedAds.map((ad, index) => {
+                const sentimentBadge = getSentimentBadge(ad);
+                return (
+                  <Link
+                    key={index}
+                    to={`/browse-ads/${ad.id}`}
+                    className="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden group hover:border-gray-500 transition-all duration-200 cursor-pointer block"
+                  >
+                    <div className="relative">
+                      <img
+                        src={ad.photoUrls[0] || "https://via.placeholder.com/400x300?text=No+Image"}
+                        alt={ad.title}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://via.placeholder.com/400x300?text=No+Image";
+                        }}
+                      />
+                      <span className="absolute top-2 left-2 bg-gray-900/90 px-2 py-1 rounded text-sm font-semibold text-white">
+                        {formatPrice(ad.price)}
+                      </span>
 
-      {ad.photoUrls.length > 1 && (
-        <span className="absolute bottom-2 right-2 bg-gray-900/80 px-2 py-1 rounded text-xs text-gray-300">
-          +{ad.photoUrls.length - 1} more
-        </span>
-      )}
-    </div>
-    <div className="p-4">
-      <h4 className="font-semibold truncate text-gray-100 mb-1">{ad.title}</h4>
-      <p className="text-gray-400 text-sm mb-2">{ad.category}</p>
-      <p className="text-gray-300 text-sm line-clamp-2 mb-3 leading-relaxed">
-        {ad.description}
-      </p>
-      <div className="flex items-center justify-between text-sm text-gray-400">
-        <span className="flex items-center gap-1">
-          <MapPinIcon className="w-4 h-4" />
-          {ad.location.name}
-        </span>
-        {ad.date && (
-          <span className="text-xs">
-            {new Date(ad.date).toLocaleDateString()}
-          </span>
-        )}
-      </div>
-      {ad.userEmail && (
-        <div className="mt-2 text-xs text-gray-500 truncate">
-          By: {ad.userEmail.split('@')[0]}
-        </div>
-      )}
-    </div>
-  </Link>
-))}
+                      
 
+                      {ad.photoUrls.length > 1 && (
+                        <span className="absolute bottom-2 right-2 bg-gray-900/80 px-2 py-1 rounded text-xs text-gray-300">
+                          +{ad.photoUrls.length - 1} more
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h4 className="font-semibold truncate text-gray-100 mb-1">{ad.title}</h4>
+                      <p className="text-gray-400 text-sm mb-2">{ad.category}</p>
+                      <p className="text-gray-300 text-sm line-clamp-2 mb-3 leading-relaxed">
+                        {ad.description}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <MapPinIcon className="w-4 h-4" />
+                          {ad.location.name}
+                        </span>
+                        {ad.date && (
+                          <span className="text-xs">
+                            {new Date(ad.date).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      {ad.userEmail && (
+                        <div className="mt-2 text-xs text-gray-500 truncate">
+                          By: {ad.userEmail.split('@')[0]}
+                        </div>
+                      )}
+                      
+                  
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
 
             {/* No results */}
@@ -350,15 +424,13 @@ export default function AllAdsPage() {
                 </div>
               </div>
             )}
-
-          
           </main>
         </div>
       </div>
 
-     <Footer />
+      <Footer />
 
-  <style>{`
+      <style>{`
         .slider::-webkit-slider-thumb {
           appearance: none;
           height: 16px;
@@ -375,6 +447,12 @@ export default function AllAdsPage() {
           background: #3b82f6;
           cursor: pointer;
           border: 2px solid #1f2937;
+        }
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
       `}</style>
     </div>
