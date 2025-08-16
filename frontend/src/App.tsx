@@ -14,31 +14,34 @@ function App() {
   return (
     <div className="App">
       <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/signin" element={<Signin />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path='/browse-ads' element={<SearchAds />} />
-          <Route path='/browse-ads/:id' element={<SingleAdPage/>}/>
-          <Route path="/ads/add" element={
-            <ProtectedRoute>
-              <AddAdPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/ads/update/:id" element={
-            <ProtectedRoute>
-              <UpdateAdPage />
-            </ProtectedRoute>
-          } />
-          <Route path='/profile' element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          } />          
-        </Routes>
+  <Routes>
+    <Route path="/" element={<Home />} />
+    <Route path="/signin" element={<Signin />} />
+    <Route path="/signup" element={<Signup />} />
+    <Route path='/browse-ads' element={<SearchAds />} />
+    <Route path='/browse-ads/:id' element={<SingleAdPage/>}/>
+    <Route path="/ads/add" element={
+      <ProtectedRoute>
+        <AddAdPage />
+      </ProtectedRoute>
+    } />
+    <Route path="/ads/update/:id" element={
+      <ProtectedRoute>
+        <UpdateAdPage />
+      </ProtectedRoute>
+    } />
+    <Route path='/profile' element={
+      <ProtectedRoute>
+        <Profile />
+      </ProtectedRoute>
+    } />          
+  </Routes>
 
-        <ChatWidget />
-      </main>
+  {/* Chat Widget with margin */}
+  <div className="fixed bottom-4 right-4">
+    <ChatWidget />
+  </div>
+</main>
     </div>
   );
 }
