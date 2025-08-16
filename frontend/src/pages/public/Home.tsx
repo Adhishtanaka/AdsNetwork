@@ -40,6 +40,26 @@ export default function Home() {
     }
   };
 
+  // Team members data
+  const teamMembers = [
+    {
+      name: "Isara Madunika",
+      image: "i.png" // You'll need to add this image
+    },
+    {
+      name: "Kavindu Shehan",
+      image: "k.png" // You'll need to add this image
+    },
+    {
+      name: "Samsudeen Ashad",
+      image: "s.png" // You'll need to add this image
+    },
+    {
+      name: "Adhishtanaka Kulasooriya",
+      image: "a.png" // You'll need to add this image
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col font-sans relative overflow-x-hidden">
       {/* Subtle background elements */}
@@ -114,9 +134,62 @@ export default function Home() {
             List Your Business
           </Link>
         </div>
-
-       
       </section>
+
+      {/* About Us Section */}
+      <section className="py-20 px-4 max-w-6xl mx-auto">
+        <div className="text-center mb-16">
+          <h3 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+            <span className="text-gray-100">Meet Our</span>{' '}
+            <span className="text-gray-400">Team</span>
+          </h3>
+          <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+            We are a dedicated team of professionals committed to revolutionizing the classified advertising 
+            experience in Sri Lanka. Our diverse expertise drives innovation and excellence in everything we do.
+          </p>
+        </div>
+
+        {/* Team Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {teamMembers.map((member, index) => (
+            <div 
+              key={index}
+              className="group relative bg-gray-800 rounded-lg border border-gray-700 p-6 hover:bg-gray-750 transition-all duration-300 hover:border-gray-600"
+            >
+              {/* Image Container */}
+              <div className="relative mb-4">
+                <div className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gray-700 border-2 border-gray-600 group-hover:border-gray-500 transition-colors duration-300">
+                  <img 
+                    src={member.image} 
+                    alt={member.name}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+              </div>
+
+              {/* Name */}
+              <h4 className="text-xl font-semibold text-gray-100 text-center group-hover:text-white transition-colors duration-300">
+                {member.name}
+              </h4>
+
+              {/* Subtle hover effect */}
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-gray-700/5 to-gray-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Optional team description */}
+        <div className="mt-16 text-center">
+          <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 max-w-4xl mx-auto">
+            <p className="text-lg text-gray-300 leading-relaxed">
+              Together, we bring years of combined experience in technology, business development, 
+              and customer service. Our mission is to create the most trusted and efficient 
+              classified advertising platform that serves the diverse needs of Sri Lankan communities.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );
