@@ -178,6 +178,16 @@ async login(email: string, password: string, location: { lat: number; lng: numbe
     });
   }
 
+  async deleteComment(id: string ){
+    const token = localStorage.getItem('jwt');
+    return this.request(`/comments/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  }
+
   async createAdvertisementWithImages(
     formData: Omit<AdData, 'photoUrls'>,
     images: File[]
