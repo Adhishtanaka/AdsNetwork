@@ -4,19 +4,23 @@ import {
   MapPinIcon,
   AdjustmentsHorizontalIcon,
   XMarkIcon,
-  ChatBubbleLeftEllipsisIcon,
 } from "@heroicons/react/24/outline";
 import Navbar from "../../components/Navbar";
 import ngeohash from "ngeohash";
 import { apiService } from "../../services/api";
 import type { Ad } from "../../constants/types";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import Footer from "../../components/Footer";
+import { categories } from "../../constants/data";
 
 export default function AllAdsPage() {
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
-  const [sort, setSort] = useState("Newest");
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize state from URL parameters
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [category, setCategory] = useState(searchParams.get("category") || "");
+  const [locationName, setLocationName] = useState(searchParams.get("location") || "");
+  const [sort, setSort] = useState(searchParams.get("sort") || "Newest");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [geohashPrecision, setGeohashPrecision] = useState(5);
@@ -24,16 +28,20 @@ export default function AllAdsPage() {
   const [userGeohash, setUserGeohash] = useState("");
   const [ads, setAds] = useState<Ad[]>([]);
 
-  const categories = [
-    "Electronics & Technology",
-    "Vehicles & Transport",
-    "Real Estate",
-    "Fashion & Beauty",
-    "Home & Garden",
-    "Sports & Recreation",
-    "Business Services",
-    "Jobs & Employment",
-  ];
+  // Update URL parameters when filters change
+  const updateURLParams = (updates: Record<string, string>) => {
+    const newParams = new URLSearchParams(searchParams);
+    
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) {
+        newParams.set(key, value);
+      } else {
+        newParams.delete(key);
+      }
+    });
+    
+    setSearchParams(newParams);
+  };
 
   // Calculate sentiment score for an ad based on comments
   const calculateSentimentScore = (ad: Ad) => {
@@ -51,22 +59,6 @@ export default function AllAdsPage() {
     
     // Return average sentiment score
     return totalScore / ad.comments.length;
-  };
-
-  // Get sentiment badge info
-  const getSentimentBadge = (ad: Ad) => {
-    if (!ad.comments || ad.comments.length === 0) return null;
-    
-    const score = calculateSentimentScore(ad);
-    const commentCount = ad.comments.length;
-    
-    if (score > 0.5) {
-      return { color: 'bg-green-600', text: `${commentCount} positive`, textColor: 'text-green-100' };
-    } else if (score < -0.5) {
-      return { color: 'bg-red-600', text: `${commentCount} negative`, textColor: 'text-red-100' };
-    } else {
-      return { color: 'bg-yellow-600', text: `${commentCount} mixed`, textColor: 'text-yellow-100' };
-    }
   };
 
   const fetchAds = async () => {
@@ -108,22 +100,87 @@ export default function AllAdsPage() {
     getUserLocation();
   }, []);
 
+  // Handle search input change with URL update
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    updateURLParams({ search: value });
+  };
+
+  // Handle category change with URL update
+  const handleCategoryChange = (value: string) => {
+    setCategory(value);
+    updateURLParams({ category: value });
+  };
+
+  // Handle location name change with URL update
+  const handleLocationNameChange = (value: string) => {
+    setLocationName(value);
+    updateURLParams({ location: value });
+  };
+
+  // Handle sort change with URL update
+  const handleSortChange = (value: string) => {
+    setSort(value);
+    updateURLParams({ sort: value });
+  };
+
+  // Clear all filters and URL parameters
+  const clearAllFilters = () => {
+    setSearch("");
+    setCategory("");
+    setLocationName("");
+    setLocationEnabled(false);
+    setGeohashPrecision(5);
+    setSort("Newest");
+    setSearchParams(new URLSearchParams());
+  };
+
   // Filter and sort ads
   const filteredAds = ads.filter(ad => {
     const matchesSearch = ad.title.toLowerCase().includes(search.toLowerCase()) ||
                          ad.description.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = !category || ad.category === category;
     
-    // Location-based filtering
+    // Location name filtering
+    const matchesLocationName = !locationName || 
+                               ad.location.name.toLowerCase().includes(locationName.toLowerCase());
+    
+    // Location-based filtering (geohash) - FIXED VERSION
     let matchesLocation = true;
     if (locationEnabled && userGeohash) {
       const userGeohashPrefix = userGeohash.substring(0, geohashPrecision);
       const adGeohashPrefix = ad.location.geohash.substring(0, geohashPrecision);
-      const neighbors = ngeohash.encode(userGeohashPrefix, geohashPrecision);
-      matchesLocation = neighbors.includes(adGeohashPrefix);
+      
+      // Direct prefix comparison - if they share the same geohash prefix, they're in the same area
+      matchesLocation = adGeohashPrefix === userGeohashPrefix;
+      
+      // For debugging - log the comparison
+      console.log('Location filtering:', {
+        userGeohash: userGeohash,
+        userPrefix: userGeohashPrefix,
+        adGeohash: ad.location.geohash,
+        adPrefix: adGeohashPrefix,
+        matches: matchesLocation,
+        precision: geohashPrecision
+      });
+      
+      // Optional: Include neighboring areas for more flexible matching
+      if (!matchesLocation && geohashPrecision > 1) {
+        try {
+          const neighbors = ngeohash.neighbors(userGeohashPrefix);
+          matchesLocation = neighbors.includes(adGeohashPrefix);
+          
+          if (matchesLocation) {
+            console.log('Found match in neighbors:', neighbors);
+          }
+        } catch (error) {
+          console.warn('Error calculating geohash neighbors:', error);
+          // Fallback to exact prefix matching only
+        }
+      }
     }
     
-    return matchesSearch && matchesCategory && matchesLocation;
+    return matchesSearch && matchesCategory && matchesLocationName && matchesLocation;
   });
 
   const sortedAds = [...filteredAds].sort((a, b) => {
@@ -197,7 +254,7 @@ export default function AllAdsPage() {
           {/* Sort Filter - Enhanced with sentiment options */}
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => handleSortChange(e.target.value)}
             className="bg-gray-800 border border-gray-700 rounded-full px-4 py-2 text-gray-300 focus:outline-none focus:border-gray-600"
           >
             <option value="Newest">Newest</option>
@@ -214,7 +271,7 @@ export default function AllAdsPage() {
             <select
               className="bg-gray-800 text-gray-300 px-4 py-2 focus:outline-none border-r border-gray-700"
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
@@ -226,7 +283,7 @@ export default function AllAdsPage() {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search ads..."
               className="flex-1 bg-gray-800 px-4 py-2 text-gray-100 placeholder-gray-400 focus:outline-none"
             />
@@ -256,6 +313,25 @@ export default function AllAdsPage() {
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
+                </div>
+
+                {/* Location Name Filter */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Location Name
+                  </label>
+                  <input
+                    type="text"
+                    value={locationName}
+                    onChange={(e) => handleLocationNameChange(e.target.value)}
+                    placeholder="Enter location name..."
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                  />
+                  {locationName && (
+                    <div className="mt-2 text-xs text-gray-400">
+                      Filtering by location: "{locationName}"
+                    </div>
+                  )}
                 </div>
 
                 {/* Location-based Search */}
@@ -312,37 +388,39 @@ export default function AllAdsPage() {
                     </div>
                   )}
 
-                  {/* Sentiment Filter Summary */}
-                  <div className="pt-4 border-t border-gray-700">
-                    <h4 className="text-sm font-medium text-gray-300 mb-3">Review Summary</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between text-gray-400">
-                        <span>Total Ads with Reviews:</span>
-                        <span>{ads.filter(ad => ad.comments && ad.comments.length > 0).length}</span>
-                      </div>
-                      <div className="flex justify-between text-green-400">
-                        <span>Positive Reviews:</span>
-                        <span>{ads.filter(ad => calculateSentimentScore(ad) > 0.5).length}</span>
-                      </div>
-                      <div className="flex justify-between text-red-400">
-                        <span>Negative Reviews:</span>
-                        <span>{ads.filter(ad => calculateSentimentScore(ad) < -0.5).length}</span>
+                  {/* Active Filters Display */}
+                  {(search || category || locationName) && (
+                    <div className="pt-4 border-t border-gray-700">
+                      <h4 className="text-sm font-medium text-gray-300 mb-3">Active Filters</h4>
+                      <div className="space-y-2">
+                        {search && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-400">Search:</span>
+                            <span className="text-blue-400">"{search}"</span>
+                          </div>
+                        )}
+                        {category && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-400">Category:</span>
+                            <span className="text-blue-400">{category}</span>
+                          </div>
+                        )}
+                        {locationName && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-400">Location:</span>
+                            <span className="text-blue-400">"{locationName}"</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="pt-4 border-t border-gray-700">
                     <button
-                      onClick={() => {
-                        setSearch("");
-                        setCategory("");
-                        setLocationEnabled(false);
-                        setGeohashPrecision(5);
-                        setSort("Newest");
-                      }}
+                      onClick={clearAllFilters}
                       className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
                     >
-                      Clear Filters
+                      Clear All Filters
                     </button>
                   </div>
                 </div>
@@ -354,7 +432,6 @@ export default function AllAdsPage() {
           <main className="flex-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {sortedAds.map((ad, index) => {
-                const sentimentBadge = getSentimentBadge(ad);
                 return (
                   <Link
                     key={index}
@@ -373,8 +450,6 @@ export default function AllAdsPage() {
                       <span className="absolute top-2 left-2 bg-gray-900/90 px-2 py-1 rounded text-sm font-semibold text-white">
                         {formatPrice(ad.price)}
                       </span>
-
-                      
 
                       {ad.photoUrls.length > 1 && (
                         <span className="absolute bottom-2 right-2 bg-gray-900/80 px-2 py-1 rounded text-xs text-gray-300">
@@ -404,8 +479,6 @@ export default function AllAdsPage() {
                           By: {ad.userEmail.split('@')[0]}
                         </div>
                       )}
-                      
-                  
                     </div>
                   </Link>
                 );
@@ -422,6 +495,13 @@ export default function AllAdsPage() {
                     : "Try adjusting your search criteria"
                   }
                 </div>
+                {/* Debug info when location filtering is enabled */}
+                {locationEnabled && userGeohash && (
+                  <div className="mt-4 text-xs text-gray-500 bg-gray-800 rounded p-2 inline-block">
+                    <div>Your geohash prefix: {userGeohash.substring(0, geohashPrecision)}</div>
+                    <div>Available ads geohash prefixes: {ads.map(ad => ad.location.geohash.substring(0, geohashPrecision)).join(', ')}</div>
+                  </div>
+                )}
               </div>
             )}
           </main>

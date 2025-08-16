@@ -1,42 +1,45 @@
+import { useState } from "react";
 import { 
   MagnifyingGlassIcon, 
   MapPinIcon, 
   ArrowRightIcon
 } from "@heroicons/react/24/outline";
 import Navbar from "../../components/Navbar";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import Footer from "../../components/Footer";
-
-const locations = [
-  "All Locations",
-  "Colombo",
-  "Gampaha",
-  "Kalutara",
-  "Kandy",
-  "Matale",
-  "Nuwara Eliya",
-  "Galle",
-  "Matara",
-  "Hambantota",
-  "Jaffna",
-  "Kilinochchi",
-  "Mannar",
-  "Vavuniya",
-  "Mullaitivu",
-  "Batticaloa",
-  "Ampara",
-  "Trincomalee",
-  "Kurunegala",
-  "Puttalam",
-  "Anuradhapura",
-  "Polonnaruwa",
-  "Badulla",
-  "Monaragala",
-  "Ratnapura",
-  "Kegalle"
-];
+import { locations } from "../../constants/data";
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("All Locations");
+  const navigate = useNavigate();
+
+  const handleSearch = () => {
+    // Create URL parameters object
+    const params = new URLSearchParams();
+    
+    // Add search query if it exists
+    if (searchQuery.trim()) {
+      params.set("search", searchQuery.trim());
+    }
+    
+    // Add location if it's not "All Locations"
+    if (selectedLocation && selectedLocation !== "All Locations") {
+      params.set("location", selectedLocation);
+    }
+    
+    // Navigate to browse-ads with parameters
+    const queryString = params.toString();
+    const url = queryString ? `/browse-ads?${queryString}` : "/browse-ads";
+    navigate(url);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col font-sans relative overflow-x-hidden">
       {/* Subtle background elements */}
@@ -66,21 +69,35 @@ export default function Home() {
               <input 
                 type="text" 
                 placeholder="Search products, services..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="flex-1 outline-none text-gray-200 placeholder-gray-500 bg-transparent min-w-0"
               />
             </div>
             <div className="flex items-center px-4 py-4 border-b border-gray-700 md:border-b-0 md:border-r min-w-0">
               <MapPinIcon className="w-5 h-5 text-gray-500 mr-3 flex-shrink-0" />
-              <select className="outline-none text-gray-200 bg-transparent cursor-pointer min-w-0">
+              <select 
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="outline-none text-gray-200 bg-transparent cursor-pointer min-w-0"
+              >
                 {locations.map((loc, idx) => (
-                  <option key={idx} className="bg-gray-800">{loc}</option>
+                  <option key={idx} value={loc} className="bg-gray-800">{loc}</option>
                 ))}
               </select>
             </div>
-            <button className="bg-gray-700 hover:bg-gray-600 text-gray-100 px-6 py-4 rounded-md font-medium transition duration-200 border border-gray-600 md:px-8">
-              Search
+            <button 
+              onClick={handleSearch}
+              className="bg-gray-700 hover:bg-gray-600 text-gray-100 px-6 py-4 rounded-md font-medium transition duration-200 border border-gray-600 md:px-8 group"
+            >
+              <span className="flex items-center">
+                Search
+                <MagnifyingGlassIcon className="ml-2 w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+              </span>
             </button>
           </div>
+          
         </div>
 
         {/* CTA Buttons */}
@@ -97,6 +114,8 @@ export default function Home() {
             List Your Business
           </Link>
         </div>
+
+       
       </section>
       <Footer />
     </div>
