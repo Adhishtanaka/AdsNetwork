@@ -5,7 +5,7 @@ import ballerina/http;
         allowOrigins: ["*"],
         allowCredentials: true,
         allowHeaders: ["Authorization", "Content-Type"],
-        allowMethods: ["POST", "OPTIONS", "GET"],
+        allowMethods: ["POST", "OPTIONS", "GET", "DELETE"],
         maxAge: 3600
     }
 }
