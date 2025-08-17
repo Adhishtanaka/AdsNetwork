@@ -293,7 +293,6 @@ export default function SingleAdPage() {
                   </svg>
                   {ad.category}
                 </div>
-
                 <div className="text-sm text-gray-400">{comments.length} comments</div>
               </div>
             </div>
@@ -341,7 +340,6 @@ export default function SingleAdPage() {
               <div className="flex items-center justify-between">
   <span className="text-gray-400">Price per kg</span>
   <span className="text-gray-200 font-semibold">{formatPrice(ad.price)}</span>
-</div>
 
                 </div>
                 <div className="flex items-center justify-between">
