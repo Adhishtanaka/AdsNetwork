@@ -61,17 +61,17 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col font-sans relative overflow-x-hidden">
-      {/* Subtle background elements */}
-      <div className="absolute inset-0 -z-10 pointer-events-none">
-        <div className="absolute -top-32 -left-32 w-96 h-96 bg-gray-700/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-gray-600/10 rounded-full blur-3xl"></div>
+    <div className="min-h-screen bg-gray-900 text-gray-100 flex flex-col font-sans">
+      {/* Fixed background container */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-gray-700/10 rounded-full blur-3xl transform -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-gray-600/10 rounded-full blur-3xl transform translate-x-1/2 translate-y-1/2"></div>
       </div>
 
       <Navbar />
 
       {/* Hero Section */}
-      <section className="flex flex-col items-center text-center py-20 px-4 max-w-6xl mx-auto">
+      <section className="flex flex-col items-center text-center py-20 px-4 max-w-6xl mx-auto w-full">
         <h2 className="text-5xl md:text-6xl font-bold tracking-tight leading-tight mb-6 max-w-4xl">
           <span className="text-gray-100">Professional</span>{' '}
           <span className="text-gray-400">Classified Network</span>
@@ -117,27 +117,26 @@ export default function Home() {
               </span>
             </button>
           </div>
-          
         </div>
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4">
-          <Link 
-            to="/browse-ads"
+          <button
+            onClick={() => console.log("Navigate to browse-ads")}
             className="group inline-flex items-center justify-center px-8 py-4 bg-gray-700 rounded-lg text-gray-100 font-semibold border border-gray-600 hover:bg-gray-600 transition duration-200">
             Browse Listings
             <ArrowRightIcon className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
-          </Link>
-          <Link
-            to="/ads/add"
+          </button>
+          <button
+            onClick={() => console.log("Navigate to add ad")}
             className="inline-flex items-center justify-center px-8 py-4 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 font-semibold hover:bg-gray-700 hover:text-gray-100 transition duration-200">
             List Your Business
-          </Link>
+          </button>
         </div>
       </section>
 
       {/* About Us Section */}
-      <section className="py-20 px-4 max-w-6xl mx-auto">
+      <section className="py-20 px-4 max-w-6xl mx-auto w-full">
         <div className="text-center mb-16">
           <h3 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
             <span className="text-gray-100">Meet Our</span>{' '}
@@ -156,7 +155,7 @@ export default function Home() {
               key={index}
               className="group relative bg-gray-800 rounded-lg border border-gray-700 p-6 hover:bg-gray-750 transition-all duration-300 hover:border-gray-600"
             >
-              {/* Image Container */}
+              {/* Avatar Container */}
               <div className="relative mb-4">
                 <div className="w-32 h-32 mx-auto rounded-full overflow-hidden bg-gray-700 border-2 border-gray-600 group-hover:border-gray-500 transition-colors duration-300">
                   <img 
@@ -178,7 +177,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Optional team description */}
+        {/* Team description */}
         <div className="mt-16 text-center">
           <div className="bg-gray-800 rounded-lg border border-gray-700 p-8 max-w-4xl mx-auto">
             <p className="text-lg text-gray-300 leading-relaxed">
