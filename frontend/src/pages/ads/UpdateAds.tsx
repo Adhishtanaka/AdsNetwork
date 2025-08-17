@@ -18,6 +18,8 @@ import { apiService } from "../../services/api";
 import Navbar from "../../components/Navbar";
 import type { FormDataType, Photo, LocationData, SubmissionState, AdData } from "../../constants/types";
 import { storageService } from "../../services/appwrite";
+import { locations,categories } from "../../constants/data";
+
 
 
 export default function UpdateAdPage() {
@@ -46,46 +48,6 @@ export default function UpdateAdPage() {
   const [loading, setLoading] = useState(true);
   const [originalAd, setOriginalAd] = useState<AdData | null>(null);
   const [existingPhotos, setExistingPhotos] = useState<string[]>([]);
-
-  const categories = [
-    "Electronics & Technology",
-    "Vehicles & Transport",
-    "Real Estate",
-    "Fashion & Beauty",
-    "Home & Garden",
-    "Sports & Recreation",
-    "Business Services",
-    "Jobs & Employment"
-  ];
-
-  const locations = [
-    "Colombo",
-    "Gampaha",
-    "Kalutara",
-    "Kandy",
-    "Matale",
-    "Nuwara Eliya",
-    "Galle",
-    "Matara",
-    "Hambantota",
-    "Jaffna",
-    "Kilinochchi",
-    "Mannar",
-    "Vavuniya",
-    "Mullaitivu",
-    "Batticaloa",
-    "Ampara",
-    "Trincomalee",
-    "Kurunegala",
-    "Puttalam",
-    "Anuradhapura",
-    "Polonnaruwa",
-    "Badulla",
-    "Monaragala",
-    "Ratnapura",
-    "Kegalle"
-  ];
-
   // Load existing advertisement data
   useEffect(() => {
     const loadAdvertisement = async () => {

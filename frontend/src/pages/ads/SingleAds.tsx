@@ -13,13 +13,33 @@ export default function SingleAdPage() {
   const [newComment, setNewComment] = useState("");
   const [selectedSentiment, setSelectedSentiment] = useState<SentimentType>('neutral');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
   const { id } = useParams();
   const navigate = useNavigate();
+
   useEffect(() => {
     if (!id) {
       navigate(-1);
     }
   }, [id, navigate]);
+
+  // Get current user email from JWT token
+  useEffect(() => {
+    const getCurrentUserEmail = () => {
+      try {
+        const token = localStorage.getItem('jwt');
+        if (token) {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          setCurrentUserEmail(payload.email || "");
+        }
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
+    };
+
+    getCurrentUserEmail();
+  }, []);
 
   const fetchAds = async () => {
     try {
@@ -73,6 +93,25 @@ export default function SingleAdPage() {
     } finally {
       setIsSubmittingComment(false);
     }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!commentId || deletingCommentId === commentId) return;
+
+    setDeletingCommentId(commentId);
+
+    try {
+      await apiService.deleteComment(String(commentId));
+      await fetchAds();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+    } finally {
+      setDeletingCommentId(null);
+    }
+  };
+
+  const canDeleteComment = (comment: Comment) => {
+    return currentUserEmail && comment.userEmail === currentUserEmail;
   };
 
   const nextImage = () => {
@@ -424,8 +463,27 @@ export default function SingleAdPage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(comment.createdAt).toLocaleDateString()}
+                      <div className="flex items-center gap-2">
+                        <div className="text-xs text-gray-500">
+                          {new Date(comment.createdAt).toLocaleDateString()}
+                        </div>
+                        {/* Delete button - only show for comment owner */}
+                        {canDeleteComment(comment) && (
+                          <button
+                            onClick={() => handleDeleteComment(comment.id)}
+                            disabled={deletingCommentId === comment.id}
+                            className="p-1 rounded-md text-gray-400 hover:text-red-400 hover:bg-red-400/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Delete comment"
+                          >
+                            {deletingCommentId === comment.id ? (
+                              <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
                     <p className="text-gray-300 text-sm">{comment.description}</p>
@@ -438,8 +496,6 @@ export default function SingleAdPage() {
               </div>
             )}
           </div>
-
-
         </div>
       </div>
     </div>
