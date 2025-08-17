@@ -9,7 +9,7 @@ configurable string dbName = ?;
 configurable string dbUser = ?;
 configurable string dbPassword = ?;
 
-// PostgreSQL client
+// PostgreSQL client with SSL configuration and improved timeout settings
 final postgresql:Client dbClient = check new (
     host = dbHost,
     port = dbPort,
@@ -20,6 +20,14 @@ final postgresql:Client dbClient = check new (
         maxOpenConnections: 10,
         maxConnectionLifeTime: 1800,
         minIdleConnections: 1
+    },
+    options = {
+        ssl: {
+            mode: "REQUIRE"
+        },
+        connectTimeout: 30,
+        socketTimeout: 60,
+        loginTimeout: 30
     }
 );
 
@@ -373,6 +381,33 @@ public function deleteComment(int commentId, string userEmail) returns error? {
     if result.affectedRowCount == 0 {
         return error("Failed to delete comment");
     }
+}
+
+public function runGeminiGeneratedQuery(string queryString) returns json|error {
+    string cleanQuery = queryString.trim();
+    if cleanQuery.startsWith("```sql") {
+        cleanQuery = cleanQuery.substring(6);
+    }
+    if cleanQuery.startsWith("```") {
+        cleanQuery = cleanQuery.substring(3);
+    }
+    if cleanQuery.endsWith("```") {
+        cleanQuery = cleanQuery.substring(0, cleanQuery.length() - 3);
+    }
+    cleanQuery = cleanQuery.trim();
+    
+    // Validate that the query is not empty
+    if cleanQuery.length() == 0 {
+        return error("Empty SQL query provided");
+    }
+    
+    // Basic security check - only allow SELECT statements
+    string upperQuery = cleanQuery.toUpperAscii();
+    if !upperQuery.startsWith("SELECT") {
+        return error("Only SELECT queries are allowed for security reasons");
+    }
+    // If it's not a common pattern, return an error with suggestion
+    return error("Complex dynamic queries are not supported. Please use predefined query patterns.");
 }
 
 // Cleanup function
