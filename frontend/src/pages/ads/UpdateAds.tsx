@@ -457,7 +457,7 @@ export default function UpdateAdPage() {
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Price (LKR) *
+                Price (LKR) per kilogram *
                 </label>
                 <div className="relative">
                   <CurrencyDollarIcon className="w-5 h-5 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2" />
