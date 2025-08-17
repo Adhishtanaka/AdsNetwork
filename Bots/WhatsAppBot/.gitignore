@@ -1,0 +1,9 @@
+node_modules/
+others/
+.wwebjs_auth/
+.wwebjs_cache/
+*.log
+*.env
+*.tmp
+
+config.js
