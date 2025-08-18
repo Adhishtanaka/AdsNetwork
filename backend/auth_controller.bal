@@ -138,36 +138,15 @@ service /auth on httpListener {
         };
     }
 
-    resource function get profile(http:Request request) returns UserInfo|http:Unauthorized|http:InternalServerError {
-        // Handle header access properly - it returns string|HeaderNotFoundError
-        string|http:HeaderNotFoundError authHeaderResult = request.getHeader("Authorization");
-        
-        string? authHeader = ();
-        if authHeaderResult is string {
-            authHeader = authHeaderResult;
-        }
-        
-        // Extract token from header
-        string|error token = extractTokenFromHeader(authHeader);
-        if token is error {
-            return <http:Unauthorized>{
-                body: {
-                    message: "Authorization header missing or invalid"
-                }
-            };
+    resource function get profile(http:Request request) returns json|http:Unauthorized|http:InternalServerError {
+        // Authenticate user
+        int|http:Unauthorized userId = authenticateUser(request);
+        if userId is http:Unauthorized {
+            return userId;
         }
 
-        // Validate JWT token
-        JWTPayload|error jwtPayload = validateJWT(token);
-        if jwtPayload is error {
-            return <http:Unauthorized>{
-                body: {
-                    message: "Invalid or expired token"
-                }
-            };
-        }
-
-        User|error user = getUserById(jwtPayload.userId);
+        // Get user details from database
+        User|error user = getUserById(userId);
         if user is error {
             return <http:InternalServerError>{
                 body: {
@@ -176,13 +155,30 @@ service /auth on httpListener {
             };
         }
 
+        // Parse user location from JSON string
+        Location? userLocation = ();
+        string? userLocationJson = user.user_location;
+        if userLocationJson is string {
+            json|error locationJsonData = userLocationJson.fromJsonString();
+            if locationJsonData is json {
+                Location|error parsedLocation = locationJsonData.cloneWithType(Location);
+                if parsedLocation is Location {
+                    userLocation = parsedLocation;
+                }
+            }
+        }
+
         int? optionalId = user.id;
-        int userId = optionalId ?: 0;
+        int userIdValue = optionalId ?: 0;
 
         return {
-            id: userId,
-            username: user.username,
-            email: user.email
+                id: userIdValue,
+                username: user.username,
+                email: user.email,
+                location: userLocation,
+                whatsappNumber: user.whatsapp_number,
+                createdAt: user.created_at,
+                updatedAt: user.updated_at
         };
     }
 }
