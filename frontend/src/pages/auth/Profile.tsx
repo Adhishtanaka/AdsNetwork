@@ -12,7 +12,6 @@ import {
   ExclamationTriangleIcon,
   ChartBarIcon,
   ChatBubbleLeftRightIcon,
-  TagIcon,
   ArrowTrendingUpIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition, Menu } from "@headlessui/react";
@@ -205,47 +204,7 @@ export default function Profile() {
             <p className="text-gray-400">Manage your advertisements and track performance</p>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-
-            <div className="bg-gradient-to-r from-gray-600 to-gray-700 p-6 rounded-xl shadow-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium">Active Ads</p>
-                  <p className="text-3xl font-bold text-white">{userAds.length}</p>
-                </div>
-                <div className="p-3 bg-blue-500/30 rounded-lg">
-                  <ChartBarIcon className="w-8 h-8 text-white" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg hover:border-gray-600 transition-colors">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm font-medium">Total Comments</p>
-                  <p className="text-3xl font-bold text-white">{analytics.totalComments}</p>
-                </div>
-                <div className="p-3 bg-gray-700 rounded-lg">
-                  <ChatBubbleLeftRightIcon className="w-8 h-8 text-gray-300" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 border border-gray-700 p-6 rounded-xl shadow-lg hover:border-gray-600 transition-colors">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm font-medium">Portfolio Value</p>
-                  <p className="text-2xl font-bold text-white">{formatPrice(analytics.totalValue)}</p>
-                </div>
-                <div className="p-3 bg-gray-700 rounded-lg">
-                   <ArrowTrendingUpIcon className="w-8 h-8 text-gray-300" />
-                </div>
-              </div>
-            </div>
-
-           
-          </div>
+      
 
           <div className="grid gap-8 lg:grid-cols-12">
             {/* Sidebar */}
@@ -261,7 +220,7 @@ export default function Profile() {
                   />
                   <div className="text-center">
                     <h2 className="text-2xl font-bold">{user.username}</h2>
-                    <p className="text-gray-400 text-sm">AdNetwork Member</p>
+                    <p className="text-gray-400 text-sm">Agriලංකා Member</p>
                   </div>
                   <div className="space-y-3 text-left w-full">
                     <div className="flex items-center space-x-3 p-3 bg-gray-700/30 rounded-lg">
@@ -441,7 +400,10 @@ export default function Profile() {
                               
                               <div className="flex items-center gap-2 ml-4">
                                 <div className="text-right">
-                                  <div className="font-semibold text-gray-100">{formatPrice(ad.price)}</div>
+                                <div className="font-semibold text-gray-100">
+  {formatPrice(ad.price)} / kg
+</div>
+
                                   {ad.sellerPhone && (
                                     <div className="text-xs text-gray-400">{ad.sellerPhone}</div>
                                   )}

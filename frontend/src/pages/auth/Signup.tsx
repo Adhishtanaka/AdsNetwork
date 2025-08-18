@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { apiService } from "../../services/api";
 import { MapPinIcon, PhoneIcon, UserIcon, EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
+import Navbar from "../../components/Navbar";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -73,20 +74,7 @@ export default function Signup() {
       </div>
 
       {/* Header */}
-      <header className="flex justify-between items-center px-6 py-5 border-b border-gray-800 bg-gray-900/95 backdrop-blur-sm">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center border border-gray-600">
-            <span className="text-gray-200 font-bold text-lg">A</span>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-100">AdNetwork</h1>
-        </div>
-        <nav className="hidden md:flex space-x-8 text-gray-400 font-medium">
-          <a href="/" className="hover:text-gray-200 transition duration-200">Home</a>
-          <a href="#features" className="hover:text-gray-200 transition duration-200">Features</a>
-          <a href="#about" className="hover:text-gray-200 transition duration-200">About</a>
-          <a href="#contact" className="hover:text-gray-200 transition duration-200">Contact</a>
-        </nav>
-      </header>
+<Navbar />
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-4">
@@ -94,7 +82,7 @@ export default function Signup() {
           <div className="space-y-6">
             <div className="text-center mb-8">
               <h2 className="text-2xl font-bold text-gray-100 mb-2">Create Account</h2>
-              <p className="text-gray-400 text-sm">Join AdNetwork and start selling</p>
+              <p className="text-gray-400 text-sm">Join Agriලංකා and start selling</p>
             </div>
 
             {error && (
@@ -233,7 +221,7 @@ export default function Signup() {
 
       {/* Footer */}
       <footer className="border-t border-gray-800 py-6 text-center text-gray-500 text-sm bg-gray-900/95">
-        © {new Date().getFullYear()} AdNetwork. All rights reserved. | Professional classified solutions for Sri Lanka.
+        © {new Date().getFullYear()} Agriලංකා. All rights reserved. | Professional classified solutions for Sri Lanka.
       </footer>
     </div>
   );

@@ -448,8 +448,9 @@ export default function AllAdsPage() {
                         }}
                       />
                       <span className="absolute top-2 left-2 bg-gray-900/90 px-2 py-1 rounded text-sm font-semibold text-white">
-                        {formatPrice(ad.price)}
-                      </span>
+  {formatPrice(ad.price)} / kg
+</span>
+
 
                       {ad.photoUrls.length > 1 && (
                         <span className="absolute bottom-2 right-2 bg-gray-900/80 px-2 py-1 rounded text-xs text-gray-300">

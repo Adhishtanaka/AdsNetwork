@@ -27,13 +27,19 @@ export const locations = [
     "Kegalle"
   ];
 
-export const categories = [
-    "Electronics & Technology",
-    "Vehicles & Transport",
-    "Real Estate",
-    "Fashion & Beauty",
-    "Home & Garden",
-    "Sports & Recreation",
-    "Business Services",
-    "Jobs & Employment"
+  export const categories = [
+    "Fruits",
+    "Vegetables",
+    "Herbs",
+    "Grains",
+    "Legumes",
+    "Oils",
+    "Spices",
+    "Nuts",
+    "Animal Feed",
+    "Plantation Crops",
+    "Agricultural Equipment"
   ];
+  
+  
+  
