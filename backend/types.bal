@@ -139,6 +139,16 @@ public type AdInfo record {|
     CommentInfo[]? comments;
 |};
 
+public type AdminUserInfo record {|
+    int id;
+    string username;
+    string email;
+    Location? location;
+    string whatsappNumber;
+    string createdAt;
+    string updatedAt;
+|};
+
 public type CommentInfo record {|
     int id;
     string userEmail;

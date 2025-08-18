@@ -161,12 +161,37 @@ public function createUser(string username, string email, string passwordHash, L
     return error("Failed to create user");
 }
 
+public function getAllUsers() returns User[]|error {
+    stream<User, sql:Error?> userStream = dbClient->query(`
+        SELECT id, username, email, password_hash, user_location, whatsapp_number, created_at, updated_at 
+        FROM users ORDER BY created_at DESC
+    `);
+    
+    User[] users = [];
+    check from User user in userStream
+        do {
+            users.push(user);
+        };
+    
+    return users;
+}
+
 public function getUserByEmail(string email) returns User|error {
     User user = check dbClient->queryRow(`
         SELECT id, username, email, password_hash, user_location, whatsapp_number, created_at, updated_at 
         FROM users WHERE email = ${email}
     `);
     return user;
+}
+
+public function deleteUserFromDb(int userId) returns error? {
+    sql:ExecutionResult result = check dbClient->execute(`
+        DELETE FROM users WHERE id = ${userId}
+    `);
+    
+    if result.affectedRowCount == 0 {
+        return error("Failed to delete user or user not found");
+    }
 }
 
 public function getUserById(int userId) returns User|error {
@@ -248,6 +273,16 @@ public function deleteAd(int adId, string userEmail) returns error? {
     
     if result.affectedRowCount == 0 {
         return error("Failed to delete ad");
+    }
+}
+
+public function deleteAdFromDb(int adId) returns error? {
+    sql:ExecutionResult result = check dbClient->execute(`
+        DELETE FROM ads WHERE id = ${adId}
+    `);
+    
+    if result.affectedRowCount == 0 {
+        return error("Failed to delete ad or ad not found");
     }
 }
 
@@ -380,6 +415,16 @@ public function deleteComment(int commentId, string userEmail) returns error? {
     
     if result.affectedRowCount == 0 {
         return error("Failed to delete comment");
+    }
+}
+
+public function deleteCommentFromDb(int commentId) returns error? {
+    sql:ExecutionResult result = check dbClient->execute(`
+        DELETE FROM comments WHERE id = ${commentId}
+    `);
+    
+    if result.affectedRowCount == 0 {
+        return error("Failed to delete comment or comment not found");
     }
 }
 
