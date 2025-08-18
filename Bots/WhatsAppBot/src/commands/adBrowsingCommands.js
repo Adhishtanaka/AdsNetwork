@@ -1,6 +1,6 @@
 // src/commands/adBrowsingCommands.js
 
-const { formatAdDetails } = require('../utils/helpers');
+const { formatAdDetails, ensureAuth, sortAdsByDistance } = require('../utils/helpers');
 
 /**
  * Handles the `!all_ads` command.
@@ -109,7 +109,93 @@ const handleViewAd = async (args, adsService, replyCallback) => {
     }
 };
 
+/**
+ * Handles the `!nearby` command.
+ * Retrieves advertisements and filters them by proximity to the user's location.
+ * @param {string} whatsappId - The WhatsApp ID of the user.
+ * @param {string[]} args - Command arguments: [maxDistance (optional)].
+ * @param {object} sessionManager - The `userSessions` object.
+ * @param {object} adsService - The `AdsNetworkService` instance.
+ * @param {function(string): Promise<void>} replyCallback - Function to send a reply message.
+ */
+const handleNearbyAds = async (whatsappId, args, sessionManager, adsService, replyCallback) => {
+    const session = sessionManager.getSession(whatsappId);
+    if (!(await ensureAuth(session, replyCallback))) return;
+    
+    // Get user's current location
+    try {
+        const profile = await adsService.getUserProfile(session.jwtToken);
+        if (!profile.location || !profile.location.lat || !profile.location.lng) {
+            await replyCallback('Your location information is missing or invalid. Please login again with valid location details.');
+            return;
+        }
+        
+        const userLat = profile.location.lat;
+        const userLng = profile.location.lng;
+        
+        // Parse max distance parameter (in km), default to 10km if not provided
+        let maxDistance = 10; // Default: 10km radius
+        if (args.length > 0) {
+            const parsedDistance = parseFloat(args[0]);
+            if (!isNaN(parsedDistance) && parsedDistance > 0) {
+                maxDistance = parsedDistance;
+            }
+        }
+        
+        // Get all ads
+        const response = await adsService.getAllAdvertisements();
+        
+        // Handle different possible response formats (same as in handleAllAds)
+        let allAds;
+        if (Array.isArray(response)) {
+            allAds = response;
+        } else if (response && Array.isArray(response.data)) {
+            allAds = response.data;
+        } else if (response && Array.isArray(response.advertisements)) {
+            allAds = response.advertisements;
+        } else if (response && Array.isArray(response.ads)) {
+            allAds = response.ads;
+        } else {
+            console.error('[ERROR] Unexpected API response format:', response);
+            await replyCallback(`Unexpected API response format. Expected array of ads.`);
+            return;
+        }
+        
+        if (!allAds || allAds.length === 0) {
+            await replyCallback('No advertisements available.');
+            return;
+        }
+        
+        // Sort and filter ads by distance
+        const nearbyAds = sortAdsByDistance(allAds, userLat, userLng, maxDistance);
+        
+        if (nearbyAds.length === 0) {
+            await replyCallback(`No advertisements found within ${maxDistance}km of your location.`);
+            return;
+        }
+        
+        // Format response
+        let reply = `*Nearby Advertisements (Within ${maxDistance}km):*\n\n`;
+        nearbyAds.forEach((ad) => {
+            const adId = ad.id || ad._id;
+            const title = ad.title || 'No title';
+            const price = ad.price || 'Price not specified';
+            const distance = ad.distance !== null ? 
+                `${ad.distance.toFixed(2)}km away` : 
+                'Distance unknown';
+                
+            reply += `*ID:* ${adId}\n*Title:* ${title}\n*Price:* ${price}\n*Distance:* ${distance}\n\n---\n\n`;
+        });
+        
+        await replyCallback(reply);
+    } catch (error) {
+        console.error('[ERROR] handleNearbyAds:', error);
+        await replyCallback(`Failed to retrieve nearby ads: ${error.message}`);
+    }
+};
+
 module.exports = {
     handleAllAds,
     handleViewAd,
+    handleNearbyAds,
 };

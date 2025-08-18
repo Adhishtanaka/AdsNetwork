@@ -1,6 +1,6 @@
 // src/utils/helpers.js
 
-const geohash = require('geohash');
+const ngeohash = require('ngeohash');
 
 /**
  * Parses location arguments from a command string.
@@ -23,8 +23,10 @@ const parseLocationArgs = (args, startIndex) => {
         return null;
     }
 
-    const name = loc_name_raw.replace(/_/g, ' '); // Replace underscores with spaces for readability
-    const geohashValue = geohash.encode(lat, lng);
+    // Clean up location name: trim and replace underscores with spaces
+    const name = loc_name_raw.trim().replace(/_/g, ' ');
+    const geohashValue = ngeohash.encode(lat, lng);
+    console.log(`[DEBUG] Parsed location: name=${name}, lat=${lat}, lng=${lng}, geohash=${geohashValue}`);
 
     return { name, lat, lng, geohash: geohashValue };
 };
@@ -70,9 +72,68 @@ const ensureAuth = async (session, replyCallback) => {
     return true;
 };
 
+/**
+ * Calculate distance between two coordinates using the Haversine formula.
+ * @param {number} lat1 - Latitude of the first point.
+ * @param {number} lng1 - Longitude of the first point.
+ * @param {number} lat2 - Latitude of the second point.
+ * @param {number} lng2 - Longitude of the second point.
+ * @returns {number} - Distance in kilometers.
+ */
+const calculateDistance = (lat1, lng1, lat2, lng2) => {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c; // Distance in km
+    return distance;
+};
+
+/**
+ * Sorts advertisements by distance from a given location.
+ * @param {Array} ads - Array of advertisement objects.
+ * @param {number} userLat - User's latitude.
+ * @param {number} userLng - User's longitude.
+ * @param {number} maxDistance - Maximum distance in kilometers (optional).
+ * @returns {Array} - Filtered and sorted array of advertisements.
+ */
+const sortAdsByDistance = (ads, userLat, userLng, maxDistance = null) => {
+    // Add distance to each ad
+    const adsWithDistance = ads.map(ad => {
+        const adLat = ad.location?.lat;
+        const adLng = ad.location?.lng;
+        let distance = null;
+        
+        if (adLat && adLng) {
+            distance = calculateDistance(userLat, userLng, adLat, adLng);
+        }
+        
+        return { ...ad, distance };
+    });
+
+    // Filter by max distance if provided
+    let result = adsWithDistance;
+    if (maxDistance !== null) {
+        result = result.filter(ad => ad.distance !== null && ad.distance <= maxDistance);
+    }
+
+    // Sort by distance (ascending)
+    return result.sort((a, b) => {
+        if (a.distance === null) return 1;
+        if (b.distance === null) return -1;
+        return a.distance - b.distance;
+    });
+};
+
 module.exports = {
     parseLocationArgs,
     formatAdDetails,
     formatCommentDetails,
     ensureAuth,
+    calculateDistance,
+    sortAdsByDistance,
 };

@@ -16,18 +16,50 @@ const handleLogin = async (whatsappId, args, sessionManager, adsService, replyCa
         await replyCallback('Usage: `!login <email> <password> <loc_name> <lat> <lng>`\n_Location name should replace spaces with underscores (e.g., `Colombo_City`)._');
         return;
     }
-    const [email, password, loc_name_raw, latStr, lngStr] = args;
+    
+    // Fix for argument parsing - extract all required parts correctly
+    const email = args[0];
+    const password = args[1];
+    
+    // Handle case where location name might contain spaces
+    let locationIndex = 2;
+    let locNameParts = [];
+    let latIndex, lngIndex;
+    
+    // Find the first argument that could be a latitude (numeric)
+    for (let i = 2; i < args.length - 1; i++) {
+        if (!isNaN(parseFloat(args[i])) && isFinite(args[i])) {
+            latIndex = i;
+            lngIndex = i + 1;
+            break;
+        }
+        locNameParts.push(args[i]);
+    }
+    
+    // If we couldn't find latitude/longitude
+    if (latIndex === undefined || lngIndex >= args.length) {
+        await replyCallback('Invalid command format. Usage: `!login <email> <password> <loc_name> <lat> <lng>`\nMake sure latitude and longitude are valid numbers.');
+        return;
+    }
+    
+    const loc_name_raw = locNameParts.join('_');
+    const latStr = args[latIndex];
+    const lngStr = args[lngIndex];
+    
+    console.log(`[DEBUG] Parsed location: name=${loc_name_raw}, lat=${latStr}, lng=${lngStr}`);
+    
     const location = parseLocationArgs([loc_name_raw, latStr, lngStr], 0);
 
     if (!location) {
-        await replyCallback('Invalid location details. Latitude and longitude must be numbers. Usage: `!login <email> <password> <loc_name> <lat> <lng>`.');
+        await replyCallback('Invalid location details. Latitude and longitude must be valid decimal numbers (e.g., 6.9271, 79.8612). Usage: `!login <email> <password> <loc_name> <lat> <lng>`.');
         return;
     }
 
     try {
         const response = await adsService.login(email, password, location);
+        console.log(`[DEBUG] Login response: ${JSON.stringify(response)}`);
         sessionManager.setSession(whatsappId, response.token, response.email, response.username);
-        await replyCallback(`Logged in successfully as ${response.username}.`);
+        await replyCallback(`Logged in successfully as ${response.user.username}.`);
     } catch (error) {
         await replyCallback(`Login failed: ${error.message}`);
     }
