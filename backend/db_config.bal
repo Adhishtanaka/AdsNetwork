@@ -410,6 +410,58 @@ public function runGeminiGeneratedQuery(string queryString) returns json|error {
     return error("Complex dynamic queries are not supported. Please use predefined query patterns.");
 }
 
+// Fixed searchAdsByKeywords function to execute query directly
+public function searchAdsByKeywords(string[] keywords) returns json|error {
+    if keywords.length() == 0 {
+        return [];
+    }
+
+    // Build parameterized query for security
+    sql:ParameterizedQuery searchQuery = `SELECT id, title, description, price, location, user_email, photo_urls, category, created_at, updated_at FROM ads WHERE `;
+    
+    // Add first keyword condition
+    string firstKeyword = "%" + keywords[0] + "%";
+    searchQuery = sql:queryConcat(searchQuery, `(title ILIKE ${firstKeyword} OR description ILIKE ${firstKeyword} OR category ILIKE ${firstKeyword})`);
+    
+    // Add remaining keywords with OR conditions
+    foreach int i in 1 ..< keywords.length() {
+        string keyword = "%" + keywords[i] + "%";
+        searchQuery = sql:queryConcat(searchQuery, ` OR (title ILIKE ${keyword} OR description ILIKE ${keyword} OR category ILIKE ${keyword})`);
+    }
+    
+    // Add limit and order
+    searchQuery = sql:queryConcat(searchQuery, ` ORDER BY created_at DESC LIMIT 20`);
+
+    // Execute the query directly using the database client
+    stream<Ad, sql:Error?> adStream = dbClient->query(searchQuery);
+    
+    Ad[] matchingAds = [];
+    check from Ad ad in adStream
+        do {
+            matchingAds.push(ad);
+        };
+    
+    // Convert to JSON format expected by the chat service
+    json[] results = [];
+    foreach Ad ad in matchingAds {
+        json adJson = {
+            "id": ad.id,
+            "title": ad.title,
+            "description": ad.description,
+            "price": ad.price,
+            "location": ad.location,
+            "user_email": ad.user_email,
+            "photo_urls": ad.photo_urls,
+            "category": ad.category,
+            "created_at": ad.created_at
+        };
+        results.push(adJson);
+    }
+    
+    return results;
+}
+
+
 // Cleanup function
 public function closeDatabase() returns error? {
     return dbClient.close();
