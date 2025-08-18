@@ -1,24 +1,26 @@
-# WhatsApp AdsNetwork Bot
+# WhatsApp AgriLanka Bot
 
-A WhatsApp bot client that interfaces with the AdsNetwork API, allowing users to browse advertisements, view details, and interact with content directly through WhatsApp.
+A WhatsApp bot client that interfaces with the AgriLanka API, allowing users to browse agricultural advertisements, view details, and interact with content directly through WhatsApp.
 
 ## Features
 
 - **Authentication**: Login, logout, and profile management
-- **Advertisement Browsing**: View all ads or details of specific ads
+- **Advertisement Browsing**: View all ads or details of specific agricultural products
+- **Location-Based Search**: Find advertisements near your location
 - **Interactive Comments**: Add and view comments on advertisements
 - **Convenient WhatsApp Interface**: Access all functionality through simple commands
 
 ## Available Commands
 
 ### Authentication
-- `!login <email> <password> <loc_name> <lat> <lng>` - Log in to your AdsNetwork account
-- `!profile` - View your AdsNetwork user profile
-- `!logout` - Log out from your AdsNetwork account
+- `!login <email> <password> <loc_name> <lat> <lng>` - Log in to your AgriLanka account
+- `!profile` - View your AgriLanka user profile
+- `!logout` - Log out from your AgriLanka account
 
 ### Browsing Advertisements
-- `!all_ads` - View all available advertisements
+- `!all_ads` - View all available agricultural advertisements
 - `!view_ad <adId>` - View detailed information for a specific advertisement
+- `!nearby [maxDistance]` - View advertisements near your location (default: 10km radius)
 
 ### Interacting with Advertisements
 - `!add_comment <adId> <sentiment> <description>` - Add a comment to an ad (sentiment: good, bad, neutral)
@@ -46,7 +48,7 @@ A WhatsApp bot client that interfaces with the AdsNetwork API, allowing users to
 ## Configuration
 
 - The bot uses Google Chrome for the WhatsApp Web session. Ensure the path is correct in `src/app.js` (default: `/usr/bin/google-chrome`)
-- The AdsNetwork API endpoint is configured in the `AdsNetworkService` class
+- The AgriLanka API endpoint is configured in the `AdsNetworkService` class in `src/services/adsNetworkService.js`
 
 ## Running the Bot
 
@@ -64,12 +66,12 @@ When you first run the bot, a QR code will be displayed in the terminal. Scan th
 
 ## Usage Examples
 
-### Login to AdsNetwork
+### Login to AgriLanka
 ```
-!login user@example.com password123 Colombo_City 6.927079 79.861244
+!login farmer@example.com password123 Anuradhapura 8.311339 80.403656
 ```
 
-### Browse Advertisements
+### Browse Agricultural Advertisements
 ```
 !all_ads
 ```
@@ -79,22 +81,28 @@ When you first run the bot, a QR code will be displayed in the terminal. Scan th
 !view_ad 12345
 ```
 
+### Find Nearby Agricultural Products
+```
+!nearby 5km
+```
+
 ### Add a Comment
 ```
-!add_comment 12345 good This_product_is_excellent
+!add_comment 12345 good Quality_rice_at_reasonable_price
 ```
 
 ## Dependencies
 
 - whatsapp-web.js - WhatsApp Web API client
 - qrcode-terminal - For displaying QR codes in terminal
-- axios (internal) - For API requests
+- axios - For API requests to AgriLanka backend
 - puppeteer (internal) - For browser automation
+- geohash/ngeohash - For location-based searches
 
 ## Troubleshooting
 
 - If authentication fails, try deleting the `.wwebjs_auth/` directory and restart the bot
-- Ensure your AdsNetwork backend is running and accessible
+- Ensure your AgriLanka backend is running and accessible
 - For location names or comment descriptions, replace spaces with underscores (e.g., `Colombo_City`)
 
 ## Notes
@@ -102,3 +110,4 @@ When you first run the bot, a QR code will be displayed in the terminal. Scan th
 - User sessions are stored in memory and will be lost if the bot is restarted
 - The bot requires an active internet connection and WhatsApp account
 - Make sure latitude and longitude values are valid numbers
+- This bot is designed specifically for connecting farmers and buyers in the agricultural sector
