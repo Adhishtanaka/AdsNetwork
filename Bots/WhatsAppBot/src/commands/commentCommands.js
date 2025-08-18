@@ -41,9 +41,25 @@ const handleAddComment = async (whatsappId, args, sessionManager, adsService, re
     };
 
     try {
-        const newComment = await adsService.addCommentToAdvertisement(commentData, session.jwtToken);
-        await replyCallback(`Comment for Ad ${newComment.ad_id} created successfully (ID: ${newComment.id}).`);
+        const response = await adsService.addCommentToAdvertisement(commentData, session.jwtToken);
+        
+        // Handle different possible response formats
+        let newComment;
+        if (response && (response.id || response._id)) {
+            newComment = response;
+        } else if (response && response.data) {
+            newComment = response.data;
+        } else if (response && response.comment) {
+            newComment = response.comment;
+        } else {
+            console.error('[ERROR] Unexpected API response format:', response);
+            await replyCallback(`Comment was submitted but received unexpected response format.`);
+            return;
+        }
+        
+        await replyCallback(`Comment for Ad ${newComment.ad_id} created successfully (ID: ${newComment.id || newComment._id}).`);
     } catch (error) {
+        console.error('[ERROR] handleAddComment:', error);
         await replyCallback(`Failed to add comment: ${error.message}`);
     }
 };
@@ -62,8 +78,23 @@ const handleViewComments = async (args, adsService, replyCallback) => {
     }
     const adId_comments_view = args[0];
     try {
-        const comments = await adsService.getCommentsForAdvertisement(adId_comments_view);
-        if (comments.length === 0) {
+        const response = await adsService.getCommentsForAdvertisement(adId_comments_view);
+        
+        // Handle different possible response formats
+        let comments;
+        if (Array.isArray(response)) {
+            comments = response;
+        } else if (response && Array.isArray(response.data)) {
+            comments = response.data;
+        } else if (response && Array.isArray(response.comments)) {
+            comments = response.comments;
+        } else {
+            console.error('[ERROR] Unexpected API response format:', response);
+            await replyCallback(`Unexpected API response format for comments on Ad ID: ${adId_comments_view}`);
+            return;
+        }
+        
+        if (!comments || comments.length === 0) {
             await replyCallback(`No comments found for Ad ID ${adId_comments_view}.`);
         } else {
             let reply = `*Comments for Ad ID ${adId_comments_view}:*\n\n`;
@@ -73,6 +104,7 @@ const handleViewComments = async (args, adsService, replyCallback) => {
             await replyCallback(reply);
         }
     } catch (error) {
+        console.error('[ERROR] handleViewComments:', error);
         await replyCallback(`Failed to retrieve comments: ${error.message}`);
     }
 };
@@ -85,8 +117,23 @@ const handleViewComments = async (args, adsService, replyCallback) => {
  */
 const handleAllComments = async (adsService, replyCallback) => {
     try {
-        const allComments = await adsService.getAllComments();
-        if (allComments.length === 0) {
+        const response = await adsService.getAllComments();
+        
+        // Handle different possible response formats
+        let allComments;
+        if (Array.isArray(response)) {
+            allComments = response;
+        } else if (response && Array.isArray(response.data)) {
+            allComments = response.data;
+        } else if (response && Array.isArray(response.comments)) {
+            allComments = response.comments;
+        } else {
+            console.error('[ERROR] Unexpected API response format:', response);
+            await replyCallback(`Unexpected API response format. Expected array of comments.`);
+            return;
+        }
+        
+        if (!allComments || allComments.length === 0) {
             await replyCallback('No comments available yet.');
         } else {
             let reply = '*All Comments:*\n\n';
@@ -96,6 +143,7 @@ const handleAllComments = async (adsService, replyCallback) => {
             await replyCallback(reply);
         }
     } catch (error) {
+        console.error('[ERROR] handleAllComments:', error);
         await replyCallback(`Failed to retrieve all comments: ${error.message}`);
     }
 };
