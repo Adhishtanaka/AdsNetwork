@@ -544,34 +544,26 @@ public function boostWhatsAppAd(string adId) returns error? {
     }
 }
 
-public function getWhatsAppAdDetails(string adId) returns WhatsAppAdDetails|error {
-    // Get WhatsApp record
-    WhatsApp whatsAppRecord = check dbClient->queryRow(`
+public function getWhatsAppAdDetails() returns WhatsAppAdDetails[]|error {
+    stream<WhatsApp, sql:Error?> whatsAppStream = dbClient->query(`
         SELECT id, boosted, created_at, updated_at 
-        FROM whatsapp WHERE id = ${adId}
+        FROM whatsapp 
+        ORDER BY created_at DESC
     `);
+
+    WhatsAppAdDetails[] whatsAppAdDetailsList = [];
+    check from WhatsApp whatsAppRecord in whatsAppStream
+        do {
+            WhatsAppAdDetails details = {
+                whatsAppId: whatsAppRecord.id,
+                boosted: whatsAppRecord.boosted,
+                whatsAppCreatedAt: whatsAppRecord.created_at,
+                whatsAppUpdatedAt: whatsAppRecord.updated_at
+            };
+            whatsAppAdDetailsList.push(details);
+        };
     
-    // Parse ad ID as integer to get ad details
-    int|error adIdInt = int:fromString(adId);
-    if adIdInt is error {
-        return error("Invalid ad ID format");
-    }
-    
-    // Get ad details
-    AdInfo|error adDetails = getAdDetails(adIdInt);
-    if adDetails is error {
-        return error("Failed to get ad details: " + adDetails.message());
-    }
-    
-    WhatsAppAdDetails whatsAppAdDetails = {
-        whatsAppId: whatsAppRecord.id,
-        boosted: whatsAppRecord.boosted,
-        whatsAppCreatedAt: whatsAppRecord.created_at,
-        whatsAppUpdatedAt: whatsAppRecord.updated_at,
-        adDetails: adDetails
-    };
-    
-    return whatsAppAdDetails;
+    return whatsAppAdDetailsList;
 }
 
 // Cleanup function

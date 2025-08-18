@@ -3,7 +3,6 @@ public type WhatsAppAdDetails record {|
     boolean boosted;
     string? whatsAppCreatedAt;
     string? whatsAppUpdatedAt;
-    AdInfo adDetails;
 |};
 
 // WhatsApp record type

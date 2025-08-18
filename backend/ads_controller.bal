@@ -309,15 +309,10 @@ service /advertisements on httpListener {
         };
     }
 
-    resource function get getWhatsAppAdDetails/[string whatsAppId](http:Request request) returns json|http:BadRequest|http:Unauthorized|http:InternalServerError {
-        // Authenticate user
-        int|http:Unauthorized userId = authenticateUser(request);
-        if userId is http:Unauthorized {
-            return userId;
-        }
-        
+    resource function get getWhatsAppAdDetails(http:Request request) returns json|http:BadRequest|http:Unauthorized|http:InternalServerError {
+
         // Get WhatsApp ad details
-        WhatsAppAdDetails|error whatsAppAdDetails = getWhatsAppAdDetails(whatsAppId);
+        WhatsAppAdDetails[]|error whatsAppAdDetails = getWhatsAppAdDetails();
         if whatsAppAdDetails is error {
             return <http:InternalServerError>{
                 body: {
