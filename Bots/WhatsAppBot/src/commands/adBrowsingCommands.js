@@ -209,8 +209,82 @@ const handleNearbyAds = async (whatsappId, args, sessionManager, adsService, rep
     }
 };
 
+/**
+ * Handles the `!search` command.
+ * Searches advertisements for keywords in title or description.
+ * @param {string[]} args - Command arguments: [keyword(s)].
+ * @param {object} adsService - The `AdsNetworkService` instance.
+ * @param {function(string): Promise<void>} replyCallback - Function to send a reply message.
+ */
+const handleSearchAds = async (args, adsService, replyCallback) => {
+    if (args.length < 1) {
+        await replyCallback('Usage: `!search <keyword(s)>`\nThis will search for ads matching the keywords in their title or description.');
+        return;
+    }
+    
+    // Join all args to create the search term
+    const searchTerm = args.join(' ').toLowerCase();
+    
+    try {
+        const response = await adsService.getAllAdvertisements();
+        
+        // Handle different possible response formats
+        let allAds;
+        if (Array.isArray(response)) {
+            allAds = response;
+        } else if (response && Array.isArray(response.data)) {
+            allAds = response.data;
+        } else if (response && Array.isArray(response.advertisements)) {
+            allAds = response.advertisements;
+        } else if (response && Array.isArray(response.ads)) {
+            allAds = response.ads;
+        } else {
+            console.error('[ERROR] Unexpected API response format:', response);
+            await replyCallback(`Unexpected API response format. Expected array of ads.`);
+            return;
+        }
+        
+        if (!allAds || allAds.length === 0) {
+            await replyCallback('No advertisements available to search.');
+            return;
+        }
+        
+        // Filter ads by matching the search term in title or description
+        const matchingAds = allAds.filter(ad => {
+            const title = (ad.title || '').toLowerCase();
+            const description = (ad.description || '').toLowerCase();
+            return title.includes(searchTerm) || description.includes(searchTerm);
+        });
+        
+        if (matchingAds.length === 0) {
+            await replyCallback(`No advertisements found matching "${searchTerm}".`);
+            return;
+        }
+        
+        // Format response
+        let reply = `*Search Results for "${searchTerm}"* (${matchingAds.length} found):\n\n`;
+        matchingAds.forEach((ad) => {
+            const adId = ad.id || ad._id;
+            const title = ad.title || 'No title';
+            const price = ad.price || 'Price not specified';
+            const category = ad.category || 'No category';
+            const shortDesc = ad.description ? 
+                (ad.description.length > 100 ? ad.description.substring(0, 97) + '...' : ad.description) : 
+                'No description';
+                
+            reply += `*ID:* ${adId}\n*Title:* ${title}\n*Price:* ${price}\n*Category:* ${category}\n*Description:* ${shortDesc}\n\n---\n\n`;
+        });
+        
+        await replyCallback(reply);
+    } catch (error) {
+        console.error('[ERROR] handleSearchAds:', error);
+        await replyCallback(`Failed to search advertisements: ${error.message}`);
+    }
+};
+
 module.exports = {
     handleAllAds,
     handleViewAd,
     handleNearbyAds,
+    handleSearchAds
 };

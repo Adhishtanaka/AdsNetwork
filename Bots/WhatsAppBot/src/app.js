@@ -124,6 +124,7 @@ client.on('message', async (msg) => {
 \`!all_ads\` - View all available advertisements.
 \`!view_ad <adId>\` - View detailed information for a specific advertisement.
 \`!nearby [maxDistance]\` - View advertisements near your location (default: 10km radius).
+\`!search <keyword(s)>\` - Search for ads containing specific keywords in title or description.
 
 *Interacting with Advertisements:*
 \`!add_comment <adId> <sentiment> <description>\` - Add a comment to an ad (sentiment: good, bad, neutral).
@@ -156,6 +157,9 @@ client.on('message', async (msg) => {
         break;
       case '!nearby':
         await adBrowsingCommands.handleNearbyAds(whatsappId, args, userSessions, adsService, replyCallback);
+        break;
+      case '!search':
+        await adBrowsingCommands.handleSearchAds(args, adsService, replyCallback);
         break;
 
       // Comment Commands

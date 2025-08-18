@@ -22,6 +22,7 @@ A WhatsApp bot client that interfaces with the AgriLanka API, allowing users to 
 - `!all_ads` - View all available agricultural advertisements
 - `!view_ad <adId>` - View detailed information for a specific advertisement
 - `!nearby [maxDistance]` - View advertisements near your location (default: 10km radius)
+- `!search <keyword(s)>` - Search for ads containing specific keywords in title or description
 
 ### Interacting with Advertisements
 - `!add_comment <adId> <sentiment> <description>` - Add a comment to an ad (sentiment: good, bad, neutral)
@@ -90,6 +91,11 @@ When you first run the bot, a QR code will be displayed in the terminal. Scan th
 ### Add a Comment
 ```
 !add_comment 12345 good Quality_rice_at_reasonable_price
+```
+
+### Search for Agricultural Products
+```
+!search lettuce
 ```
 
 ## Dependencies
