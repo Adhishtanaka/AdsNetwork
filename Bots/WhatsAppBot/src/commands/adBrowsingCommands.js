@@ -125,6 +125,7 @@ const handleNearbyAds = async (whatsappId, args, sessionManager, adsService, rep
     // Get user's current location
     try {
         const profile = await adsService.getUserProfile(session.jwtToken);
+        console.log('[DEBUG] User profile:', JSON.stringify(profile, null, 2));
         if (!profile.location || !profile.location.lat || !profile.location.lng) {
             await replyCallback('Your location information is missing or invalid. Please login again with valid location details.');
             return;
