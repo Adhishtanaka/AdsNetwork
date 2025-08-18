@@ -66,7 +66,7 @@ export default function SingleAdPage() {
   }
 
   const formatPrice = (price: string) => {
-    return `LKR ${parseInt(price).toLocaleString()}`;
+    return `LKR ${parseInt(price).toLocaleString()} per kg`;
   };
 
   const handleAddComment = async (e?: React.FormEvent) => {
