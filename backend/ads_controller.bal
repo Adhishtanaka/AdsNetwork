@@ -293,22 +293,6 @@ service /advertisements on httpListener {
     }
 
     resource function post boostwhtsappid/[string whatsAppId](http:Request request) returns json|http:BadRequest|http:Unauthorized|http:InternalServerError {
-        // Authenticate user
-        int|http:Unauthorized userId = authenticateUser(request);
-        if userId is http:Unauthorized {
-            return userId;
-        }
-        
-        // Get user details to extract email
-        User|error user = getUserById(userId);
-        if user is error {
-            return <http:InternalServerError>{
-                body: {
-                    message: "Failed to get user details"
-                }
-            };
-        }
-        
         // Boost the WhatsApp ad
         error? boostResult = boostWhatsAppAd(whatsAppId);
         if boostResult is error {
@@ -321,8 +305,7 @@ service /advertisements on httpListener {
         
         return {
             message: "WhatsApp ad boosted successfully",
-            whatsAppId: whatsAppId,
-            boostedBy: user.email
+            whatsAppId: whatsAppId
         };
     }
 

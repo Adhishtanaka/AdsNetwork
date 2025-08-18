@@ -111,7 +111,7 @@ public function initDatabase() returns error? {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     `);
-    
+
     if result is sql:Error {
         return result;
     }
@@ -521,15 +521,17 @@ public function searchAdsByKeywords(string[] keywords) returns json|error {
 
 public function addWhatsAppAdId(string adId) returns error? {
     sql:ExecutionResult result = check dbClient->execute(`
-        INSERT INTO whatsapp (id, boosted) 
-        VALUES (${adId}, FALSE)
-        ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP
+        INSERT INTO whatsapp (id, boosted, created_at, updated_at) 
+        VALUES (${adId}, FALSE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT (id) 
+        DO UPDATE SET updated_at = EXCLUDED.updated_at
     `);
-    
+
     if result.affectedRowCount == 0 {
         return error("Failed to add WhatsApp ad ID");
     }
 }
+
 
 public function boostWhatsAppAd(string adId) returns error? {
     sql:ExecutionResult result = check dbClient->execute(`
