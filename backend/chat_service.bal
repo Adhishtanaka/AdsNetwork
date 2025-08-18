@@ -6,9 +6,9 @@ final http:Client geminiClient = check new ("https://generativelanguage.googleap
 
 public function processChatMessageWithHistory(string userMessage, ChatMessage[]? conversationHistory) returns string|error {
     // Step 1: Classify if SQL needed
-    string classifyPrompt = "You are a classifier.\nUser message: \"" + userMessage + "\"\n\nDecide:\n" +
-        "- If the question is about greetings, casual chat, or unrelated to ads/marketplace → return ONLY \"NO_SQL\".\n" +
-        "- If the question is about ads, products, categories, prices, or marketplace info → return ONLY \"SQL_NEEDED\".";
+    string classifyPrompt = "You are a classifier for Agriලංකා agriculture marketplace.\nUser message: \"" + userMessage + "\"\n\nDecide:\n" +
+        "- If the question is about agriculture ads, products, services, buying, selling, or marketplace inquiries → return ONLY \"SQL_NEEDED\".\n" +
+        "- If the question is about anything unrelated to ads/marketplace (general questions, other topics, personal advice, etc.) → return ONLY \"NO_SQL\".";
 
     string|error classifyResp = callGeminiApi(classifyPrompt);
     if classifyResp is error {
@@ -18,20 +18,15 @@ public function processChatMessageWithHistory(string userMessage, ChatMessage[]?
     string normalizedClassification = classifyResp.trim().toUpperAscii();
 
     if normalizedClassification == "NO_SQL" {
-        // Casual conversation
-        string friendlyPrompt = createChatPromptWithHistory("", userMessage, conversationHistory);
-        string|error friendlyResponse = callGeminiApi(friendlyPrompt);
-        if friendlyResponse is error {
-            return error("Friendly chat failed: " + friendlyResponse.message());
-        }
-        return friendlyResponse;
+        // Politely redirect non-marketplace questions
+        return "I'm here to help you find ads and products on Agriලංකා. What can I help you find today?";
     }
 
     // Step 2: Extract keywords instead of SQL
-    string keywordPrompt = "You are a keyword extractor.\n" +
+    string keywordPrompt = "You are a keyword extractor for agriculture marketplace.\n" +
         "User message: \"" + userMessage + "\"\n\n" +
-        "Extract 1–2 most relevant keywords that can be used to search in ads (title, description, category, location).\n" +
-        "Return ONLY a JSON array of keywords. Example: [\"laptop\", \"colombo\"].";
+        "Extract 1–2 most relevant keywords that can be used to search in agriculture ads (title, description, category, location).\n" +
+        "Return ONLY a JSON array of keywords. Example: [\"rice\", \"colombo\"].";
 
     string|error keywordResp = callGeminiApi(keywordPrompt);
     if keywordResp is error {
@@ -62,9 +57,7 @@ public function processChatMessageWithHistory(string userMessage, ChatMessage[]?
     }
 
     // Step 4: Summarize results with Gemini
-    string finalPrompt = "User asked: \"" + userMessage + "\".\n" +
-        "Here are query results from the database: " + queryResults.toJsonString() +
-        ".\n\nPlease answer in natural language, presenting ads clearly.";
+    string finalPrompt = createFinalResponsePrompt(userMessage, queryResults, conversationHistory);
 
     string|error finalResponse = callGeminiApi(finalPrompt);
     if finalResponse is error {
@@ -72,6 +65,32 @@ public function processChatMessageWithHistory(string userMessage, ChatMessage[]?
     }
 
     return finalResponse;
+}
+
+// Create final response prompt with enhanced instructions
+function createFinalResponsePrompt(string userMessage, json queryResults, ChatMessage[]? conversationHistory) returns string {
+    string prompt = "You are Agriලංකා Assistant, a helpful AI for Agriලංකා agriculture marketplace platform.\n\n";
+    
+    prompt += "IMPORTANT GUIDELINES:\n";
+    prompt += "1. ONLY respond to questions related to agriculture ads, products, services, buying, selling, or marketplace inquiries\n";
+    prompt += "2. When showing ad information, DO NOT mention or display the ad ID numbers to users\n";
+    prompt += "3. For each relevant ad, provide a clickable link using this format: <a href=\"/browse-ads/{ad_id}\" target=\"_blank\" style=\"color: #22c55e; font-weight: bold; text-decoration: underline;\">🔗 View Ad</a>\n";
+    prompt += "4. Show images using markdown format with image URLs, and show only one image per ad\n";
+    prompt += "5. Reference previous conversation context when relevant to maintain conversation flow\n\n";
+
+    if conversationHistory is ChatMessage[] && conversationHistory.length() > 0 {
+        prompt += "Previous conversation:\n";
+        foreach ChatMessage msg in conversationHistory {
+            prompt += msg.role + ": " + msg.content + "\n";
+        }
+        prompt += "\n";
+    }
+
+    prompt += "User asked: \"" + userMessage + "\".\n";
+    prompt += "Here are query results from the database: " + queryResults.toJsonString() + "\n\n";
+    prompt += "Please answer in natural language, presenting ads clearly with clickable links and images. Remember to maintain conversation context and provide helpful agriculture marketplace assistance.";
+
+    return prompt;
 }
 
 // Helper function to clean JSON responses that might be wrapped in markdown code blocks
@@ -94,7 +113,12 @@ function cleanJsonResponse(string response) returns string {
 
 // Create chat prompt with history
 function createChatPromptWithHistory(string adsContext, string userMessage, ChatMessage[]? conversationHistory) returns string {
-    string prompt = "You are Agriලංකා Assistant, a helpful AI for an agriculture marketplace platform.\n\n";
+    string prompt = "You are Agriලංකා Assistant, a helpful AI for Agriලංකා agriculture marketplace platform.\n\n";
+    
+    prompt += "IMPORTANT GUIDELINES:\n";
+    prompt += "1. ONLY respond to questions related to agriculture ads, products, services, buying, selling, or marketplace inquiries\n";
+    prompt += "2. If asked about anything unrelated to ads/marketplace, politely redirect: \"I'm here to help you find ads and products on Agriලංකා. What can I help you find today?\"\n";
+    prompt += "3. Remember previous conversation context to provide coherent responses\n\n";
 
     if adsContext.length() > 0 {
         prompt += adsContext + "\n\n";
@@ -109,7 +133,7 @@ function createChatPromptWithHistory(string adsContext, string userMessage, Chat
     }
 
     prompt += "Current user message: \"" + userMessage + "\"\n\n";
-    prompt += "Please respond helpfully and naturally. If this is a greeting or casual conversation, respond appropriately without using database information.";
+    prompt += "Please respond helpfully and naturally while following the guidelines above.";
 
     return prompt;
 }
