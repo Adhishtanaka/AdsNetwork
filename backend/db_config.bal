@@ -102,6 +102,20 @@ public function initDatabase() returns error? {
         return result;
     }
 
+    // Create whatsapp table with specified columns
+    result = dbClient->execute(`
+        CREATE TABLE IF NOT EXISTS whatsapp (
+            id VARCHAR(255) PRIMARY KEY,
+            boosted BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `);
+    
+    if result is sql:Error {
+        return result;
+    }
+
     // Create indexes for better performance on foreign key columns
     result = dbClient->execute(`
         CREATE INDEX IF NOT EXISTS idx_ads_user_email ON ads(user_email)
@@ -144,7 +158,6 @@ public function initDatabase() returns error? {
         return result;
     }
 }
-
 
 // User operations
 public function createUser(string username, string email, string passwordHash, Location location, string phone) returns int|error {
@@ -506,6 +519,58 @@ public function searchAdsByKeywords(string[] keywords) returns json|error {
     return results;
 }
 
+public function addWhatsAppAdId(string adId) returns error? {
+    sql:ExecutionResult result = check dbClient->execute(`
+        INSERT INTO whatsapp (id, boosted) 
+        VALUES (${adId}, FALSE)
+        ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP
+    `);
+    
+    if result.affectedRowCount == 0 {
+        return error("Failed to add WhatsApp ad ID");
+    }
+}
+
+public function boostWhatsAppAd(string adId) returns error? {
+    sql:ExecutionResult result = check dbClient->execute(`
+        UPDATE whatsapp SET boosted = TRUE, updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ${adId}
+    `);
+    
+    if result.affectedRowCount == 0 {
+        return error("Failed to boost WhatsApp ad or ad not found");
+    }
+}
+
+public function getWhatsAppAdDetails(string adId) returns WhatsAppAdDetails|error {
+    // Get WhatsApp record
+    WhatsApp whatsAppRecord = check dbClient->queryRow(`
+        SELECT id, boosted, created_at, updated_at 
+        FROM whatsapp WHERE id = ${adId}
+    `);
+    
+    // Parse ad ID as integer to get ad details
+    int|error adIdInt = int:fromString(adId);
+    if adIdInt is error {
+        return error("Invalid ad ID format");
+    }
+    
+    // Get ad details
+    AdInfo|error adDetails = getAdDetails(adIdInt);
+    if adDetails is error {
+        return error("Failed to get ad details: " + adDetails.message());
+    }
+    
+    WhatsAppAdDetails whatsAppAdDetails = {
+        whatsAppId: whatsAppRecord.id,
+        boosted: whatsAppRecord.boosted,
+        whatsAppCreatedAt: whatsAppRecord.created_at,
+        whatsAppUpdatedAt: whatsAppRecord.updated_at,
+        adDetails: adDetails
+    };
+    
+    return whatsAppAdDetails;
+}
 
 // Cleanup function
 public function closeDatabase() returns error? {

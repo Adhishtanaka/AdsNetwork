@@ -232,7 +232,120 @@ service /advertisements on httpListener {
         };
     }
 
-    //  resource function post boost(http:Request request) returns json|http:BadRequest|http:Unauthorized|http:InternalServerError {
+    resource function post [int adId]/boost(http:Request request) returns json|http:BadRequest|http:Unauthorized|http:InternalServerError|http:Forbidden {
+        // Step 1: Authenticate user using JWT token
+        int|http:Unauthorized userId = authenticateUser(request);
+        if userId is http:Unauthorized {
+            return userId;
+        }
+        
+        // Step 2: Get authenticated user details to extract email from JWT token
+        User|error authenticatedUser = getUserById(userId);
+        if authenticatedUser is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "Failed to get authenticated user details"
+                }
+            };
+        }
+        
+        // Step 3: Retrieve the advertisement details
+        AdInfo|error ad = getAdDetails(adId);
+        if ad is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "Failed to retrieve advertisement details: " + ad.message()
+                }
+            };
+        }
+        
+        // Step 4: Verify that the ad owner email matches the JWT token user email
+        if ad.userEmail != authenticatedUser.email {
+            return <http:Forbidden>{
+                body: {
+                    message: "Access denied: Only the advertisement owner can boost this ad",
+                    adOwnerEmail: ad.userEmail,
+                    authenticatedUserEmail: authenticatedUser.email
+                }
+            };
+        }
+        
+        // Step 5: Add WhatsApp ad ID to the database
+        string adIdString = adId.toString();
+        error? addWhatsAppResult = addWhatsAppAdId(adIdString);
+        if addWhatsAppResult is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "Failed to add WhatsApp ad ID: " + addWhatsAppResult.message()
+                }
+            };
+        }
+        
+        // Step 7: Return success response confirming the boost operation
+        return {
+            message: "Advertisement boosted successfully",
+            adId: adId.toString(),
+            adTitle: ad.title,
+            boostedBy: authenticatedUser.email,
+            ownershipVerified: true,
+            whatsAppAdAdded: true
+        };
+    }
 
-    //  }
+    resource function post boostwhtsappid/[string whatsAppId](http:Request request) returns json|http:BadRequest|http:Unauthorized|http:InternalServerError {
+        // Authenticate user
+        int|http:Unauthorized userId = authenticateUser(request);
+        if userId is http:Unauthorized {
+            return userId;
+        }
+        
+        // Get user details to extract email
+        User|error user = getUserById(userId);
+        if user is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "Failed to get user details"
+                }
+            };
+        }
+        
+        // Boost the WhatsApp ad
+        error? boostResult = boostWhatsAppAd(whatsAppId);
+        if boostResult is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "Failed to boost WhatsApp ad: " + boostResult.message()
+                }
+            };
+        }
+        
+        return {
+            message: "WhatsApp ad boosted successfully",
+            whatsAppId: whatsAppId,
+            boostedBy: user.email
+        };
+    }
+
+    resource function get getWhatsAppAdDetails/[string whatsAppId](http:Request request) returns json|http:BadRequest|http:Unauthorized|http:InternalServerError {
+        // Authenticate user
+        int|http:Unauthorized userId = authenticateUser(request);
+        if userId is http:Unauthorized {
+            return userId;
+        }
+        
+        // Get WhatsApp ad details
+        WhatsAppAdDetails|error whatsAppAdDetails = getWhatsAppAdDetails(whatsAppId);
+        if whatsAppAdDetails is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "Failed to retrieve WhatsApp ad details: " + whatsAppAdDetails.message()
+                }
+            };
+        }
+        
+        return {
+            message: "WhatsApp ad details retrieved successfully",
+            whatsAppAdDetails: whatsAppAdDetails
+        };
+    }
 }

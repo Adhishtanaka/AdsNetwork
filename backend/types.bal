@@ -1,3 +1,19 @@
+public type WhatsAppAdDetails record {|
+    string whatsAppId;
+    boolean boosted;
+    string? whatsAppCreatedAt;
+    string? whatsAppUpdatedAt;
+    AdInfo adDetails;
+|};
+
+// WhatsApp record type
+public type WhatsApp record {|
+    string id;
+    boolean boosted;
+    string created_at?;
+    string updated_at?;
+|};
+
 // Location record type
 public type Location record {|
     string name;
