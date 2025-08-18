@@ -5,6 +5,7 @@ const qrcode = require('qrcode-terminal');
 
 const userSessions = require('./data/userSessions');
 const AdsNetworkService = require('./services/adsNetworkService');
+const AdNotifierService = require('./services/adNotifierService'); // Import new service
 
 // Import command handlers
 const authCommands = require('./commands/authCommands');
@@ -55,10 +56,21 @@ client.on('auth_failure', msg => {
   // 2. Send an alert to an admin.
 });
 
-client.on('ready', () => {
+let adNotifier; // Declare adNotifier outside client.on('ready') scope
+
+client.on('ready', async () => {
   console.log('\nClient is ready!');
   console.log(`Your WhatsApp buyer bot is online. Backend: ${adsService.BASE_URL}`);
   console.log('Type `!help` in your WhatsApp chat to see available commands.');
+
+  // Initialize and start AdNotifierService
+  // IMPORTANT: Replace 'YOUR_ADMIN_WHATSAPP_ID@c.us' with the actual WhatsApp ID where you want to receive new ad notifications.
+  // This could be your own WhatsApp ID, or a group chat ID.
+  const notificationTargetId = '94710559795@c.us'; // Placeholder: Replace with your actual WhatsApp ID or group ID
+  adNotifier = new AdNotifierService(client, adsService, notificationTargetId);
+  
+  // Start polling immediately - the service will handle initialization internally
+  adNotifier.startPolling(5 * 60 * 1000); // Check for new ads every 5 minutes (300000 ms)
 });
 
 client.on('disconnected', (reason) => {
@@ -69,6 +81,9 @@ client.on('disconnected', (reason) => {
     // (This might not always be necessary or accurate if multiple users connect to the same bot instance)
     // For a single-user bot, client.info.wid is its own ID.
     userSessions.deleteSession(client.info.wid._serialized);
+  }
+  if (adNotifier) {
+    adNotifier.stopPolling(); // Stop polling when disconnected
   }
   console.log('Bot disconnected. Please restart the script (`node src/app.js`) to re-connect.');
 });

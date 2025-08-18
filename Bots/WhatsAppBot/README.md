@@ -9,6 +9,7 @@ A WhatsApp bot client that interfaces with the AgriLanka API, allowing users to 
 - **Location-Based Search**: Find advertisements near your location
 - **Interactive Comments**: Add and view comments on advertisements
 - **Convenient WhatsApp Interface**: Access all functionality through simple commands
+- **Ad Notifications**: Receive notifications about new advertisements
 
 ## Available Commands
 
@@ -111,3 +112,4 @@ When you first run the bot, a QR code will be displayed in the terminal. Scan th
 - The bot requires an active internet connection and WhatsApp account
 - Make sure latitude and longitude values are valid numbers
 - This bot is designed specifically for connecting farmers and buyers in the agricultural sector
+- The ad notification service will alert about new advertisements at the configured interval

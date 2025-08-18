@@ -1,6 +1,8 @@
 // src/utils/helpers.js
 
 const ngeohash = require('ngeohash');
+// const MessageMedia = require('../structures/MessageMedia'); // Import MessageMedia
+// const { MessageMedia } = require('whatsapp-web.js');
 
 /**
  * Parses location arguments from a command string.
@@ -136,4 +138,5 @@ module.exports = {
     ensureAuth,
     calculateDistance,
     sortAdsByDistance,
+    // MessageMedia, // Export MessageMedia
 };
