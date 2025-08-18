@@ -89,3 +89,89 @@ export type CreateCommentRequest = {
 };
 
 export type SentimentType = 'good' | 'bad' | 'neutral';
+
+// types/admin.ts
+export interface AdminUser {
+  id: number;
+  username: string;
+  email: string;
+  location: {
+    name: string;
+    lat: number;
+    lng: number;
+    geohash: string;
+  };
+  whatsappNumber: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminAd {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  price: number;
+  location: {
+    name: string;
+    lat: number;
+    lng: number;
+    geohash: string;
+  };
+  photoUrls: string[];
+  userId: number;
+  userName: string;
+  userEmail: string;
+  score: number; // +1 for good, -1 for bad, 0 for neutral
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminComment {
+  id: number;
+  content: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  adId: number;
+  adTitle: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  totalAds: number;
+  totalComments: number;
+}
+
+export interface AdminApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+export interface AdminUsersResponse {
+  message: string;
+  totalUsers: number;
+  users: AdminUser[];
+}
+
+export interface AdminAdsResponse {
+  message: string;
+  totalAds: number;
+  ads: AdminAd[];
+}
+
+export interface AdminCommentsResponse {
+  message: string;
+  totalComments: number;
+  comments: AdminComment[];
+}
+
+export interface DeleteResponse {
+  message: string;
+  userId?: string;
+  adId?: string;
+  commentId?: string;
+}

@@ -161,12 +161,37 @@ public function createUser(string username, string email, string passwordHash, L
     return error("Failed to create user");
 }
 
+public function getAllUsers() returns User[]|error {
+    stream<User, sql:Error?> userStream = dbClient->query(`
+        SELECT id, username, email, password_hash, user_location, whatsapp_number, created_at, updated_at 
+        FROM users ORDER BY created_at DESC
+    `);
+    
+    User[] users = [];
+    check from User user in userStream
+        do {
+            users.push(user);
+        };
+    
+    return users;
+}
+
 public function getUserByEmail(string email) returns User|error {
     User user = check dbClient->queryRow(`
         SELECT id, username, email, password_hash, user_location, whatsapp_number, created_at, updated_at 
         FROM users WHERE email = ${email}
     `);
     return user;
+}
+
+public function deleteUserFromDb(int userId) returns error? {
+    sql:ExecutionResult result = check dbClient->execute(`
+        DELETE FROM users WHERE id = ${userId}
+    `);
+    
+    if result.affectedRowCount == 0 {
+        return error("Failed to delete user or user not found");
+    }
 }
 
 public function getUserById(int userId) returns User|error {
@@ -248,6 +273,16 @@ public function deleteAd(int adId, string userEmail) returns error? {
     
     if result.affectedRowCount == 0 {
         return error("Failed to delete ad");
+    }
+}
+
+public function deleteAdFromDb(int adId) returns error? {
+    sql:ExecutionResult result = check dbClient->execute(`
+        DELETE FROM ads WHERE id = ${adId}
+    `);
+    
+    if result.affectedRowCount == 0 {
+        return error("Failed to delete ad or ad not found");
     }
 }
 
@@ -383,6 +418,16 @@ public function deleteComment(int commentId, string userEmail) returns error? {
     }
 }
 
+public function deleteCommentFromDb(int commentId) returns error? {
+    sql:ExecutionResult result = check dbClient->execute(`
+        DELETE FROM comments WHERE id = ${commentId}
+    `);
+    
+    if result.affectedRowCount == 0 {
+        return error("Failed to delete comment or comment not found");
+    }
+}
+
 public function runGeminiGeneratedQuery(string queryString) returns json|error {
     string cleanQuery = queryString.trim();
     if cleanQuery.startsWith("```sql") {
@@ -409,6 +454,58 @@ public function runGeminiGeneratedQuery(string queryString) returns json|error {
     // If it's not a common pattern, return an error with suggestion
     return error("Complex dynamic queries are not supported. Please use predefined query patterns.");
 }
+
+// Fixed searchAdsByKeywords function to execute query directly
+public function searchAdsByKeywords(string[] keywords) returns json|error {
+    if keywords.length() == 0 {
+        return [];
+    }
+
+    // Build parameterized query for security
+    sql:ParameterizedQuery searchQuery = `SELECT id, title, description, price, location, user_email, photo_urls, category, created_at, updated_at FROM ads WHERE `;
+    
+    // Add first keyword condition
+    string firstKeyword = "%" + keywords[0] + "%";
+    searchQuery = sql:queryConcat(searchQuery, `(title ILIKE ${firstKeyword} OR description ILIKE ${firstKeyword} OR category ILIKE ${firstKeyword})`);
+    
+    // Add remaining keywords with OR conditions
+    foreach int i in 1 ..< keywords.length() {
+        string keyword = "%" + keywords[i] + "%";
+        searchQuery = sql:queryConcat(searchQuery, ` OR (title ILIKE ${keyword} OR description ILIKE ${keyword} OR category ILIKE ${keyword})`);
+    }
+    
+    // Add limit and order
+    searchQuery = sql:queryConcat(searchQuery, ` ORDER BY created_at DESC LIMIT 20`);
+
+    // Execute the query directly using the database client
+    stream<Ad, sql:Error?> adStream = dbClient->query(searchQuery);
+    
+    Ad[] matchingAds = [];
+    check from Ad ad in adStream
+        do {
+            matchingAds.push(ad);
+        };
+    
+    // Convert to JSON format expected by the chat service
+    json[] results = [];
+    foreach Ad ad in matchingAds {
+        json adJson = {
+            "id": ad.id,
+            "title": ad.title,
+            "description": ad.description,
+            "price": ad.price,
+            "location": ad.location,
+            "user_email": ad.user_email,
+            "photo_urls": ad.photo_urls,
+            "category": ad.category,
+            "created_at": ad.created_at
+        };
+        results.push(adJson);
+    }
+    
+    return results;
+}
+
 
 // Cleanup function
 public function closeDatabase() returns error? {

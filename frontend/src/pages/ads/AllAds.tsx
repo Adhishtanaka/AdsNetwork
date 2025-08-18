@@ -236,7 +236,7 @@ export default function AllAdsPage() {
       <Navbar />
 
       {/* Filters + Search */}
-      <div className="sticky top-[64px] z-40 bg-gray-900 px-4 py-4 border-b border-gray-800">
+      <div className=" bg-gray-900 px-4 py-4 border-b border-gray-800">
         <div className="max-w-7xl mx-auto flex flex-wrap gap-3 items-center">
           {/* Advanced Search Toggle */}
           <button

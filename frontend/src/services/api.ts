@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { storageService } from './appwrite';
-import type { AdData, ApiResponse, CreateCommentRequest } from '../constants/types';
+import type { AdData, AdminAdsResponse, AdminApiResponse, AdminCommentsResponse, AdminUsersResponse, ApiResponse, CreateCommentRequest, DeleteResponse } from '../constants/types';
 import ngeohash from "ngeohash";
 
 class ApiService {
@@ -205,7 +205,68 @@ async login(email: string, password: string, location: { lat: number; lng: numbe
       };
     }
   }
+
+// Get all users
+async getAllUsersAdmin(): Promise<AdminApiResponse<AdminUsersResponse>> {
+  const token = localStorage.getItem('jwt');
+  return this.request('/admin/users',{
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }});
 }
+
+// Get all ads
+async getAllAdsAdmin(): Promise<AdminApiResponse<AdminAdsResponse>> {
+  const token = localStorage.getItem('jwt');
+  return this.request('/admin/ads',{
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+}
+
+// Get all comments
+async getAllCommentsAdmin(): Promise<AdminApiResponse<AdminCommentsResponse>> {
+  const token = localStorage.getItem('jwt');
+  return this.request('/admin/comments',{
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+}
+
+// Delete user
+async deleteUserAdmin(userId: number): Promise<AdminApiResponse<DeleteResponse>> {
+  const token = localStorage.getItem('jwt');
+  return this.request(`/admin/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+}
+
+// Delete ad
+async deleteAdAdmin(adId: number): Promise<AdminApiResponse<DeleteResponse>> {
+  const token = localStorage.getItem('jwt');
+  return this.request(`/admin/ads/${adId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+}
+
+// Delete comment
+async deleteCommentAdmin(commentId: number): Promise<AdminApiResponse<DeleteResponse>> {
+  const token = localStorage.getItem('jwt');
+  return this.request(`/admin/comments/${commentId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+}}
 
 export const apiService = new ApiService();
 

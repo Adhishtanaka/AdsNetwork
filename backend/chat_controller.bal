@@ -12,13 +12,10 @@ import ballerina/time;
 
 service /chat on httpListener {
 
-    resource function post .(http:Request request) returns json|http:BadRequest|http:InternalServerError {
-
+   resource function post .(http:Request request) returns json|http:BadRequest|http:InternalServerError {
         
-        // Get JSON payload with improved error context
         json|http:ClientError jsonPayload = request.getJsonPayload();
         if jsonPayload is http:ClientError {
-          
             return <http:BadRequest>{
                 body: {
                     message: "Request contains invalid JSON format. Please ensure your request body is properly formatted JSON.",
@@ -27,11 +24,9 @@ service /chat on httpListener {
                 }
             };
         }
-        
-        // Parse the chat request with detailed error messaging
+
         ChatRequest|error chatRequest = jsonPayload.cloneWithType(ChatRequest);
         if chatRequest is error {
-           
             return <http:BadRequest>{
                 body: {
                     message: "Request is missing required fields or contains invalid data structure.",
@@ -43,31 +38,30 @@ service /chat on httpListener {
             };
         }
         
-        // Get current timestamp
+        // Log conversation history if present
+        ChatMessage[]? conversationHistory = chatRequest.conversationHistory;
+        
         time:Utc currentTime = time:utcNow();
         string timestamp = time:utcToString(currentTime);
         
-        // Process chat message with conversation history
         string|error chatResponse = processChatMessageWithHistory(chatRequest.message, chatRequest.conversationHistory);
         if chatResponse is error {
-            
             return <http:InternalServerError>{
                 body: {
                     message: "We encountered an issue while processing your message. Our team has been notified.",
                     errorCode: "CHAT_PROCESSING_ERROR",
                     suggestion: "Please try again in a moment. If the issue persists, consider rephrasing your message.",
-                    supportInfo: "Contact support if this error continues to occur"
+                    supportInfo: "Contact support if this error continues to occur",
+                    debugInfo: chatResponse.message()
                 }
             };
         }
         
-        // Build updated conversation history
         ChatMessage[] updatedHistory = [];
         
         // Add previous conversation history if provided
-        ChatMessage[]? previousHistory = chatRequest.conversationHistory;
-        if previousHistory is ChatMessage[] {
-            foreach ChatMessage msg in previousHistory {
+        if conversationHistory is ChatMessage[] {
+            foreach ChatMessage msg in conversationHistory {
                 updatedHistory.push(msg);
             }
         }
