@@ -10,6 +10,7 @@ A WhatsApp bot client that interfaces with the AgriLanka API, allowing users to 
 - **Interactive Comments**: Add and view comments on advertisements
 - **Convenient WhatsApp Interface**: Access all functionality through simple commands
 - **Ad Notifications**: Receive notifications about new advertisements
+- **Ad Boosting**: Automatically identify and boost important advertisements that haven't been promoted
 
 ## Available Commands
 
@@ -51,6 +52,18 @@ A WhatsApp bot client that interfaces with the AgriLanka API, allowing users to 
 
 - The bot uses Google Chrome for the WhatsApp Web session. Ensure the path is correct in `src/app.js` (default: `/usr/bin/google-chrome`)
 - The AgriLanka API endpoint is configured in the `AdsNetworkService` class in `src/services/adsNetworkService.js`
+- Ad notification and boosting services can be configured by changing the polling intervals in `src/app.js`
+
+## Background Services
+
+The bot includes two background services that run automatically:
+
+1. **Ad Notification Service**: Polls the API at regular intervals to check for new advertisements and sends notifications to a configured WhatsApp ID or channel.
+   - Default interval: 5 minutes
+
+2. **Ad Boosting Service**: Periodically identifies non-boosted advertisements that should be promoted and automatically boosts them to increase visibility.
+   - Default interval: 10 minutes
+   - Helps ensure important agricultural products get proper visibility
 
 ## Running the Bot
 
@@ -111,6 +124,10 @@ When you first run the bot, a QR code will be displayed in the terminal. Scan th
 - If authentication fails, try deleting the `.wwebjs_auth/` directory and restart the bot
 - Ensure your AgriLanka backend is running and accessible
 - For location names or comment descriptions, replace spaces with underscores (e.g., `Colombo_City`)
+- If ad notifications or boosting don't appear to be working:
+  - Check that the notification target ID is correctly configured
+  - Verify the bot has proper permissions in the target chat/channel
+  - Check server logs for any API connection errors
 
 ## Notes
 
@@ -118,4 +135,5 @@ When you first run the bot, a QR code will be displayed in the terminal. Scan th
 - The bot requires an active internet connection and WhatsApp account
 - Make sure latitude and longitude values are valid numbers
 - This bot is designed specifically for connecting farmers and buyers in the agricultural sector
-- The ad notification service will alert about new advertisements at the configured interval
+- The ad notification and boosting services will automatically run in the background while the bot is active
+- For production deployment, consider implementing persistent storage for user sessions

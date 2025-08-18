@@ -82,6 +82,15 @@ class AdsNetworkService {
         return this._request(`/advertisements/${adId}`, 'GET');
     }
 
+    // --- WhatsApp Ad Management ---
+    async getWhatsAppAdDetails() {
+        return this._request('/advertisements/getWhatsAppAdDetails/', 'GET');
+    }
+
+    async boostWhatsAppAd(whatsAppId) {
+        return this._request(`/advertisements/boostwhtsappid/${whatsAppId}`, 'POST');
+    }
+
     // --- Interacting with Advertisements (as a Buyer) ---
     async addCommentToAdvertisement(commentData, token) {
         return this._request('/comments', 'POST', commentData, token);

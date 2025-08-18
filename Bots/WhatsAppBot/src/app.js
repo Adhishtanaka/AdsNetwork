@@ -5,7 +5,8 @@ const qrcode = require('qrcode-terminal');
 
 const userSessions = require('./data/userSessions');
 const AdsNetworkService = require('./services/adsNetworkService');
-const AdNotifierService = require('./services/adNotifierService'); // Import new service
+const AdNotifierService = require('./services/adNotifierService');
+const AdBoosterService = require('./services/adBoosterService'); // Import new booster service
 
 // Import command handlers
 const authCommands = require('./commands/authCommands');
@@ -57,6 +58,7 @@ client.on('auth_failure', msg => {
 });
 
 let adNotifier; // Declare adNotifier outside client.on('ready') scope
+let adBooster; // Declare adBooster outside client.on('ready') scope
 
 client.on('ready', async () => {
   console.log('\nClient is ready!');
@@ -66,11 +68,15 @@ client.on('ready', async () => {
   // Initialize and start AdNotifierService
   // IMPORTANT: Replace 'YOUR_ADMIN_WHATSAPP_ID@c.us' with the actual WhatsApp ID where you want to receive new ad notifications.
   // This could be your own WhatsApp ID, or a group chat ID.
-  const notificationTargetId = '120363420900072728@newsletter'; // Placeholder: Replace with your actual WhatsApp ID or group ID
+  const notificationTargetId = '120363420900072728@newsletter'; // Placeholder: Replace with your actual WhatsApp ID or Channel ID
   adNotifier = new AdNotifierService(client, adsService, notificationTargetId);
   
   // Start polling immediately - the service will handle initialization internally
   adNotifier.startPolling(5 * 60 * 1000); // Check for new ads every 5 minutes (300000 ms)
+  
+  // Initialize and start AdBoosterService
+  adBooster = new AdBoosterService(client, adsService, notificationTargetId);
+  adBooster.startPolling(10 * 60 * 1000); // Check for non-boosted ads every 10 minutes
 });
 
 client.on('disconnected', (reason) => {
@@ -84,6 +90,9 @@ client.on('disconnected', (reason) => {
   }
   if (adNotifier) {
     adNotifier.stopPolling(); // Stop polling when disconnected
+  }
+  if (adBooster) {
+    adBooster.stopPolling(); // Stop ad boosting when disconnected
   }
   console.log('Bot disconnected. Please restart the script (`node src/app.js`) to re-connect.');
 });
