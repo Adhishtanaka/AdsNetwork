@@ -66,7 +66,7 @@ client.on('ready', async () => {
   // Initialize and start AdNotifierService
   // IMPORTANT: Replace 'YOUR_ADMIN_WHATSAPP_ID@c.us' with the actual WhatsApp ID where you want to receive new ad notifications.
   // This could be your own WhatsApp ID, or a group chat ID.
-  const notificationTargetId = '94710559795@c.us'; // Placeholder: Replace with your actual WhatsApp ID or group ID
+  const notificationTargetId = '120363420900072728@newsletter'; // Placeholder: Replace with your actual WhatsApp ID or group ID
   adNotifier = new AdNotifierService(client, adsService, notificationTargetId);
   
   // Start polling immediately - the service will handle initialization internally
