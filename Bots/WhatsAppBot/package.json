@@ -1,5 +1,5 @@
 {
-  "name": "AdsNetworkWhatsAppBot",
+  "name": "AgriLanka-WhatsApp-Bot",
   "version": "1.0.0",
   "scripts": {
     "start": "node src/app.js",
