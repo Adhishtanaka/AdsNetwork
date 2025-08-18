@@ -76,8 +76,15 @@ client.on('disconnected', (reason) => {
 // --- Main Message Handler ---
 
 client.on('message', async (msg) => {
-  // Function to send a reply back to the chat for consistent usage in handlers
-  const replyCallback = async (message) => await msg.reply(message);
+  // Function to send a reply back to the chat for consistent usage in handlers,
+  // directly calling client.sendMessage and ensuring chat ID is a string.
+  const replyCallback = async (message, media = null) => {
+    if (media) {
+      return await client.sendMessage(String(msg.from), media, { caption: message });
+    } else {
+      return await client.sendMessage(String(msg.from), message);
+    }
+  };
 
   const whatsappId = msg.from; // The WhatsApp ID of the user sending the message
   const commandBody = msg.body.trim();

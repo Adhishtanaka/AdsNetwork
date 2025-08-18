@@ -1,6 +1,7 @@
 // src/commands/adBrowsingCommands.js
 
 const { formatAdDetails, ensureAuth, sortAdsByDistance } = require('../utils/helpers');
+const { MessageMedia } = require('whatsapp-web.js');
 
 /**
  * Handles the `!all_ads` command.
@@ -66,7 +67,7 @@ const handleAllAds = async (adsService, replyCallback) => {
  * Retrieves and displays detailed information for a specific advertisement.
  * @param {string[]} args - Command arguments: [adId].
  * @param {object} adsService - The `AdsNetworkService` instance.
- * @param {function(string): Promise<void>} replyCallback - Function to send a reply message.
+ * @param {function(string, object=): Promise<void>} replyCallback - Function to send a reply message.
  */
 const handleViewAd = async (args, adsService, replyCallback) => {
     if (args.length < 1) {
@@ -102,7 +103,20 @@ const handleViewAd = async (args, adsService, replyCallback) => {
             return;
         }
         
-        await replyCallback(formatAdDetails(ad));
+        let media = null;
+        if (ad.photoUrls && ad.photoUrls.length > 0) {
+            try {
+                // Create a MessageMedia object from the first photo URL
+                media = await MessageMedia.fromUrl(ad.photoUrls[0], { unsafeMime: true });
+                console.log(`[INFO] Loaded photo for ad ${adId_view} from ${ad.photoUrls[0]}`);
+            } catch (mediaError) {
+                console.error(`[ERROR] Failed to load media for ad ${adId_view}:`, mediaError);
+                // Continue without media if there's an error loading it
+            }
+        }
+        
+        // Send the formatted ad details with the photo if available
+        await replyCallback(formatAdDetails(ad), media);
     } catch (error) {
         console.error('[ERROR] handleViewAd:', error);
         await replyCallback(`Failed to view ad: ${error.message}`);
