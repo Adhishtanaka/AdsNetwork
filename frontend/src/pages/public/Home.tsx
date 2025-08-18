@@ -113,7 +113,7 @@ export default function Home() {
       </Link>
 
       <Link
-        to="/add"
+        to="/ads/add"
         className="inline-flex items-center justify-center px-8 py-4 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 font-semibold hover:bg-gray-700 hover:text-gray-100 transition duration-200"
       >
         Sell Your Products
