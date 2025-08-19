@@ -37,17 +37,18 @@ const parseLocationArgs = (args, startIndex) => {
 /**
  * Formats advertisement details into a readable string for display.
  * @param {object} ad - Advertisement object from the API.
- * @returns {string}
+ * @returns {Promise<string>}
  */
-const formatAdDetails = (ad) => {
+const formatAdDetails = async (ad) => {
+    const mapUrl = await createShortUrl(`https://www.google.com/maps/place/${ad.location.lat},${ad.location.lng}`);
+    
     return `*Advertisement Details (ID: ${ad.id}):*
-Title: ${ad.title}
-Description: ${ad.description}
-Price: ${ad.price}
-Category: ${ad.category}
-Location: ${ad.location.name} (Lat: ${ad.location.lat}, Lng: ${ad.location.lng})
-Posted by: ${ad.userEmail}
-Photos: ${ad.photoUrls && ad.photoUrls.length > 0 ? ad.photoUrls.join(', ') : 'N/A'}`;
+📌 *Title*: ${ad.title}
+📝 *Description*: ${ad.description}
+💰 *Price*: ${ad.price} per kg
+🏷️ *Category*: ${ad.category}
+📍 *Location*: ${ad.location.name} (${mapUrl})
+👤 *Posted by*: ${ad.sellerPhone}`;
 };
 
 /**
