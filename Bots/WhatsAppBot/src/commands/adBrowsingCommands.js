@@ -1,6 +1,6 @@
 // src/commands/adBrowsingCommands.js
 
-const { formatAdDetails, ensureAuth, sortAdsByDistance } = require('../utils/helpers');
+const { formatAdDetails, ensureAuth, sortAdsByDistance, createShortUrl } = require('../utils/helpers');
 const { MessageMedia } = require('whatsapp-web.js');
 
 /**
@@ -42,17 +42,18 @@ const handleAllAds = async (adsService, replyCallback) => {
         } else {
             let reply = '*All Advertisements:*\n\n';
             
-            allAds.forEach((ad, index) => {
+            for (const [index, ad] of allAds.entries()) {
                 // Handle cases where ad properties might be missing
                 const adId = ad.id || ad._id || index + 1;
+                const adLink = `http://localhost:5173/browse-ads/${adId}`;
                 const title = ad.title || 'No title';
                 const price = ad.price || 'Price not specified';
                 const category = ad.category || 'No category';
-                const location = ad.location?.name || ad.location || 'Location not specified';
+                const mapLink = await createShortUrl(`https://www.google.com/maps/place/${ad.location?.lat},${ad.location?.lng}`);
                 const userEmail = ad.userEmail || ad.user?.email || ad.email || 'Unknown user';
-                
-                reply += `*ID:* ${adId}\n*Title:* ${title}\n*Price:* ${price}\n*Category:* ${category}\n*Location:* ${location}\n*Posted by:* ${userEmail}\n\n---\n\n`;
-            });
+
+                reply += `*Title:* ${title}\n*Price:* ${price}\n*Category:* ${category}\n*Location:* ${mapLink}\n*Posted by:* ${userEmail}\n*Page Link:* ${adLink}\n---\n\n`;
+            }
             
             await replyCallback(reply);
         }

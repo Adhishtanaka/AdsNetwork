@@ -1,6 +1,7 @@
 // src/utils/helpers.js
 
-const ngeohash = require('ngeohash');
+const geohash = require('ngeohash');
+const axios = require('axios');
 // const MessageMedia = require('../structures/MessageMedia'); // Import MessageMedia
 // const { MessageMedia } = require('whatsapp-web.js');
 
@@ -27,7 +28,7 @@ const parseLocationArgs = (args, startIndex) => {
 
     // Clean up location name: trim and replace underscores with spaces
     const name = loc_name_raw.trim().replace(/_/g, ' ');
-    const geohashValue = ngeohash.encode(lat, lng);
+    const geohashValue = geohash.encode(lat, lng);
     console.log(`[DEBUG] Parsed location: name=${name}, lat=${lat}, lng=${lng}, geohash=${geohashValue}`);
 
     return { name, lat, lng, geohash: geohashValue };
@@ -131,6 +132,26 @@ const sortAdsByDistance = (ads, userLat, userLng, maxDistance = null) => {
     });
 };
 
+// short urls
+const createShortUrl = async (fullUrl) => {
+    try {
+        // Use TinyURL API to create a real short URL
+        const tinyUrlApiUrl = `https://tinyurl.com/api-create.php?url=${encodeURIComponent(fullUrl)}`;
+        const response = await axios.get(tinyUrlApiUrl);
+        const shortUrl = response.data;
+        
+        // console.log(`Original URL: ${fullUrl}`);
+        // console.log(`Short URL: ${shortUrl}`);
+        console.log(`[DEBUG] Created short URL: ${shortUrl}`);
+        
+        return shortUrl;
+    } catch (error) {
+        console.error('Error creating URL:', error);
+        return fullUrl; // Return original URL on error instead of throwing
+    }
+};
+
+
 module.exports = {
     parseLocationArgs,
     formatAdDetails,
@@ -138,5 +159,6 @@ module.exports = {
     ensureAuth,
     calculateDistance,
     sortAdsByDistance,
+    createShortUrl,
     // MessageMedia, // Export MessageMedia
 };
