@@ -10,7 +10,6 @@ import {
   RocketLaunchIcon,
   EllipsisVerticalIcon,
   ExclamationTriangleIcon,
-  ChartBarIcon,
   ChatBubbleLeftRightIcon,
   ArrowTrendingUpIcon,
 } from "@heroicons/react/24/outline";

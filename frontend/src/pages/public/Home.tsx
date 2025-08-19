@@ -27,7 +27,7 @@ export default function Home() {
     navigate(url);
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e:any) => {
     if (e.key === "Enter") {
       handleSearch();
     }
