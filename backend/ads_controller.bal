@@ -326,4 +326,73 @@ service /advertisements on httpListener {
             whatsAppAdDetails: whatsAppAdDetails
         };
     }
+
+    // Updated nearby API endpoint with geohash parameter using dbconfig function
+    resource function get nearby/[string geohash](http:Request request) returns json|http:Unauthorized|http:Forbidden|http:InternalServerError {
+        // Get ads by geohash prefix using dbconfig function
+        Ad[]|error nearbyAds = getAdsByGeohashPrefix(geohash);
+        if nearbyAds is error {
+            return <http:InternalServerError>{
+                body: {
+                    message: "Failed to retrieve nearby ads: " + nearbyAds.message()
+                }
+            };
+        }
+        
+        // Convert Ad records to AdInfo records for consistent response format
+        AdInfo[] nearbyAdInfoList = [];
+        foreach Ad ad in nearbyAds {
+            // Get seller details to fetch phone number
+            User|error seller = getUserByEmail(ad.user_email);
+            string? sellerPhone = ();
+            if seller is User {
+                sellerPhone = seller.whatsapp_number;
+            }
+
+            Location|error location = parseLocationFromJson(ad.location);
+            if location is error {
+                continue; // Skip ads with invalid location data
+            }
+
+            string[]|error photoUrls = parsePhotoUrlsFromJson(ad.photo_urls);
+            if photoUrls is error {
+                continue; // Skip ads with invalid photo URL data
+            }
+
+            int? optionalId = ad.id;
+            int adIdValue = optionalId ?: 0;
+            
+            // Get comments for this ad
+            CommentInfo[]|error comments = getCommentsForAd(adIdValue);
+            CommentInfo[]? commentsArray = comments is error ? () : comments;
+
+            string? optionalCategory = ad.category;
+            string categoryValue = optionalCategory ?: "";
+            string? createdAt = ad.created_at;
+            string? dateValue = createdAt;
+
+            AdInfo adInfo = {
+                id: adIdValue,
+                title: ad.title,
+                description: ad.description,
+                price: ad.price.toString(),
+                location: location,
+                category: categoryValue,
+                userEmail: ad.user_email,
+                sellerPhone: sellerPhone,
+                photoUrls: photoUrls,
+                date: dateValue,
+                comments: commentsArray
+            };
+
+            nearbyAdInfoList.push(adInfo);
+        }
+        
+        return {
+            message: "Nearby ads retrieved successfully",
+            geohash: geohash,
+            totalAds: nearbyAdInfoList.length(),
+            ads: nearbyAdInfoList
+        };
+    }
 }

@@ -566,6 +566,25 @@ public function getWhatsAppAdDetails() returns WhatsAppAdDetails[]|error {
     return whatsAppAdDetailsList;
 }
 
+public function getAdsByGeohashPrefix(string geohashPrefix) returns Ad[]|error {
+    string geohashPattern = geohashPrefix + "%";
+    
+    stream<Ad, sql:Error?> adStream = dbClient->query(`
+        SELECT id, title, description, price, location, user_email, photo_urls, category, created_at, updated_at 
+        FROM ads 
+        WHERE location->>'geohash' LIKE ${geohashPattern}
+        ORDER BY created_at DESC
+    `);
+    
+    Ad[] ads = [];
+    check from Ad ad in adStream
+        do {
+            ads.push(ad);
+        };
+    
+    return ads;
+}
+
 // Cleanup function
 public function closeDatabase() returns error? {
     return dbClient.close();
