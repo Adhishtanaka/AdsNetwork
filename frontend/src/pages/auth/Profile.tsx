@@ -255,7 +255,7 @@ export default function Profile() {
               {/* Sentiment Analysis Chart */}
               {sentimentData.length > 0 && (
                 <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6">
-                  <h3 className="text-xl font-bold text-white mb-6">Comment Sentiment</h3>
+                  <h3 className="text-xl font-bold text-white mb-6">Comment Feedback</h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
