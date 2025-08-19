@@ -16,7 +16,7 @@ const handleAddComment = async (whatsappId, args, sessionManager, adsService, re
     if (!(await ensureAuth(session, replyCallback))) return;
 
     if (args.length < 3) {
-        await replyCallback('Usage: `!add_comment <adId> <sentiment> <description>`\n_Sentiment must be: good, bad, or neutral. Description replaces spaces with underscores._');
+        await replyCallback('📝 *Comment Format:* `!add_comment <adId> <sentiment> <description>`\n\n• *Sentiment* must be: good, bad, or neutral\n• *Description* can include spaces naturally\n• Example: `!add_comment 123 good Very nice product!`');
         return;
     }
     const [adId_comment, sentiment_comment, ...desc_comment_parts] = args;
@@ -57,10 +57,10 @@ const handleAddComment = async (whatsappId, args, sessionManager, adsService, re
             return;
         }
         
-        await replyCallback(`Comment for Ad ${newComment.ad_id} created successfully (ID: ${newComment.id || newComment._id}).`);
+        await replyCallback(`✅ *Comment Added Successfully*\n\n📊 *Details:*\n• Ad ID: ${newComment.ad_id}\n• Comment ID: ${newComment.id || newComment._id}\n• Sentiment: ${sentiment_comment}\n• Your comment has been posted!`);
     } catch (error) {
         console.error('[ERROR] handleAddComment:', error);
-        await replyCallback(`Failed to add comment: ${error.message}`);
+        await replyCallback(`❌ *Comment Failed*\n\nUnable to add your comment. Error: ${error.message}\n\nPlease try again later.`);
     }
 };
 
@@ -73,7 +73,7 @@ const handleAddComment = async (whatsappId, args, sessionManager, adsService, re
  */
 const handleViewComments = async (args, adsService, replyCallback) => {
     if (args.length < 1) {
-        await replyCallback('Usage: `!view_comments <adId>`');
+        await replyCallback('📋 *Usage:* `!view_comments <adId>`\n\nView all comments for a specific advertisement.');
         return;
     }
     const adId_comments_view = args[0];
@@ -95,9 +95,9 @@ const handleViewComments = async (args, adsService, replyCallback) => {
         }
         
         if (!comments || comments.length === 0) {
-            await replyCallback(`No comments found for Ad ID ${adId_comments_view}.`);
+            await replyCallback(`📭 *No Comments Found*\n\nAd ID ${adId_comments_view} doesn't have any comments yet. Be the first to comment!`);
         } else {
-            let reply = `*Comments for Ad ID ${adId_comments_view}:*\n\n`;
+            let reply = `💬 *Comments for Ad #${adId_comments_view}* (${comments.length} comments)\n\n`;
             comments.forEach(c => {
                 reply += `${formatCommentDetails(c)}\n\n---\n\n`;
             });
@@ -105,7 +105,7 @@ const handleViewComments = async (args, adsService, replyCallback) => {
         }
     } catch (error) {
         console.error('[ERROR] handleViewComments:', error);
-        await replyCallback(`Failed to retrieve comments: ${error.message}`);
+        await replyCallback(`❌ *Error Retrieving Comments*\n\nCouldn't load comments for Ad ID ${adId_comments_view}. Error: ${error.message}`);
     }
 };
 
@@ -134,9 +134,9 @@ const handleAllComments = async (adsService, replyCallback) => {
         }
         
         if (!allComments || allComments.length === 0) {
-            await replyCallback('No comments available yet.');
+            await replyCallback('📭 *No Comments Available*\n\nThere are no comments in the system yet.');
         } else {
-            let reply = '*All Comments:*\n\n';
+            let reply = `💬 *All Comments* (${allComments.length} total)\n\n`;
             allComments.forEach(comment => {
                 reply += `*Ad ID:* ${comment.ad_id}\n${formatCommentDetails(comment)}\n\n---\n\n`;
             });
@@ -144,7 +144,7 @@ const handleAllComments = async (adsService, replyCallback) => {
         }
     } catch (error) {
         console.error('[ERROR] handleAllComments:', error);
-        await replyCallback(`Failed to retrieve all comments: ${error.message}`);
+        await replyCallback(`❌ *Error Retrieving Comments*\n\nCouldn't load comments. Error: ${error.message}\n\nPlease try again later.`);
     }
 };
 

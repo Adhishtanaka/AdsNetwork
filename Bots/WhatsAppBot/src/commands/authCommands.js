@@ -13,7 +13,7 @@ const { parseLocationArgs, ensureAuth } = require('../utils/helpers');
  */
 const handleLogin = async (whatsappId, args, sessionManager, adsService, replyCallback) => {
     if (args.length < 5) {
-        await replyCallback('Usage: `!login <email> <password> <loc_name> <lat> <lng>`\n_Location name should replace spaces with underscores (e.g., `Colombo_City`)._');
+        await replyCallback('🔐 *Login Format:*\n`!login <email> <password> <loc_name> <lat> <lng>`\n\n• Location name can include spaces naturally\n• Example: `!login user@example.com pass123 Colombo 6.9271 79.8612`');
         return;
     }
     
@@ -59,9 +59,9 @@ const handleLogin = async (whatsappId, args, sessionManager, adsService, replyCa
         const response = await adsService.login(email, password, location);
         console.log(`[DEBUG] Login response: ${JSON.stringify(response)}`);
         sessionManager.setSession(whatsappId, response.token, response.email, response.username);
-        await replyCallback(`Logged in successfully as ${response.user.username}.`);
+        await replyCallback(`✅ *Login Successful*\n\nWelcome, ${response.user.username}! You are now logged in.\n\nYou can now use commands like:\n• View ads: \`!all_ads\`\n• Search nearby: \`!nearby\`\n• Your profile: \`!profile\``);
     } catch (error) {
-        await replyCallback(`Login failed: ${error.message}`);
+        await replyCallback(`❌ *Login Failed*\n\nUnable to log in. Error: ${error.message}\n\nPlease check your credentials and try again.`);
     }
 };
 
@@ -74,10 +74,11 @@ const handleLogin = async (whatsappId, args, sessionManager, adsService, replyCa
  */
 const handleLogout = async (whatsappId, sessionManager, replyCallback) => {
     if (sessionManager.hasSession(whatsappId)) {
+        const username = sessionManager.getSession(whatsappId)?.username || "User";
         sessionManager.deleteSession(whatsappId);
-        await replyCallback('You have been logged out.');
+        await replyCallback(`👋 *Logout Successful*\n\nGoodbye, ${username}! You have been logged out.\n\nYou'll need to log in again to access personalized features.`);
     } else {
-        await replyCallback('You are not logged in.');
+        await replyCallback('ℹ️ *Not Logged In*\n\nYou are not currently logged in. Use `!login` to sign in to your account.');
     }
 };
 
@@ -95,9 +96,9 @@ const handleProfile = async (whatsappId, sessionManager, adsService, replyCallba
 
     try {
         const profile = await adsService.getUserProfile(session.jwtToken);
-        await replyCallback(`*Your Profile:*\nUsername: ${profile.username}\nEmail: ${profile.email}\nPhone: ${profile.phone}\nLocation: ${profile.location.name} (Lat: ${profile.location.lat}, Lng: ${profile.location.lng})`);
+        await replyCallback(`👤 *Your Profile*\n\n*Username:* ${profile.username}\n*Email:* ${profile.email}\n*Phone:* ${profile.phone || 'Not provided'}\n*Location:* ${profile.location.name}\n*Coordinates:* ${profile.location.lat.toFixed(4)}, ${profile.location.lng.toFixed(4)}\n\nTo update your location, please log in again with new coordinates.`);
     } catch (error) {
-        await replyCallback(`Failed to get profile: ${error.message}`);
+        await replyCallback(`❌ *Profile Error*\n\nFailed to retrieve your profile information. Error: ${error.message}\n\nPlease try logging in again.`);
     }
 };
 
