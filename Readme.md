@@ -1,31 +1,66 @@
 # Agriලංකා
 
-Agriලංකා is a full-stack agriculture marketplace platform featuring a Ballerina backend and a React frontend.
-It provides a secure, scalable, and farmer-friendly environment for managing products, users, and marketplace analytics.
+Agriලංකා is a full-stack agriculture marketplace platform connecting farmers and buyers. It reduces distance barriers, allows price and quality comparison, and enables farmers to open a digital market with minimal effort.
+
+The platform features a **Ballerina backend**, **React frontend**, **Appwrite for image storage**, **Neon PostgreSQL database**, **WhatsApp bot integration**, **AI-powered search via Gemini API**, and a **MCP server** for AI client access.
 
 <img src="./screenshot/image.png" width="600" alt="Website"/>
 
+---
+
 ## Features
 
-* **Ballerina Backend**
+### **Core Functionalities**
 
-  * RESTful API design
-  * PostgreSQL database support
+* **Search & Discovery**
+
+  * Instant search for products with live suggestions
+  * Advanced search using **GeoHash** for nearby products
+  * Sorting by feedback, price, and quality
+
+* **Product Management**
+
+  * Add, update, delete, or boost products
+  * Boosted ads automatically promoted via Agriලංකා WhatsApp channel
+
+* **User Roles**
+
+  * Buyers, sellers, or both
+  * Dashboard for sellers to manage products, view analytics, and monitor feedback
+  * Admin dashboard for moderation, user/product management, and comment review
+
+* **Communication**
+
+  * WhatsApp bot for browsing, contacting sellers, and receiving updates
+  * AI-powered chat component (Gemini API) to classify search queries and normal questions
+
+* **AI Integration**
+
+  * Gemini API for conversation/search-based queries
+  * Chatbot supports images, product search, and real-time query handling
+
+* **Scalability & Security**
+
   * JWT-based authentication
-  * Configurable via `Config.toml` or environment variables
-
-* **React Frontend**
-
-  * Modern UI with Tailwind CSS
-  * Responsive design for desktop and mobile
-  * Environment-specific API endpoint configuration
-  * Appwrite used for image storage
+  * Stateless backend allowing horizontal scaling
+  * Appwrite used for image hosting and direct frontend communication
 
 ---
 
-### **Backend Configuration**
+## **Architecture Overview**
 
-#### 1. Config.toml (Required)
+<img src="./screenshot/diagram.png" width="600"/>
+
+* **Frontend** communicates directly with Appwrite storage and the backend API.
+* **Backend** manages all core logic, database queries, and external integrations.
+* **WhatsApp bot** allows users to interact without installing a separate app.
+* **MCP server** connects AI assistants (like Claude) to marketplace data.
+
+---
+
+## **Backend Configuration**
+
+### 1. Config.toml (Required)
 
 Create `backend/Config.toml`:
 
@@ -45,6 +80,7 @@ serverPort = 8080
 jwtSecret = "<your-jwt-secret>"
 jwtExpiryTime = 86400.0 # 24 hours in seconds
 
+# Gemini API Key
 geminiApiKey="<your-gemini-api-key>"
 ```
 
@@ -57,10 +93,9 @@ bal run
 
 ---
 
-### **Frontend Configuration**
+## **Frontend Configuration**
 
-#### `.env`
-
+### `.env`
 
 Create `frontend/.env`:
 
@@ -89,18 +124,32 @@ pnpm dev
 
 ---
 
-## Notes
+## **MCP Server (AI Client Integration)**
 
-* Both backend and frontend must be running for full functionality.
-* Update `.env` and `Config.toml` with your actual configuration before running.
+The **AgriLanka MCP Server** connects AI assistants to the marketplace for product search and nearby product discovery.
 
+* [MCP Server README](mcp/README.md) - Guide for setting up and using the MCP server.
 
-## Contributing
+> Works with MCP-compatible clients like 5ire, Cursor, or VS Code. Claude may have compatibility issues.
+
+---
+
+## **WhatsApp Bot Integration**
+
+* Users can browse ads, view product details, find nearby items, and contact sellers directly via WhatsApp.
+* Boosted ads automatically appear in the Agriලංකා WhatsApp channel.
+
+* [WhatsApp Bot README](Bots/WhatsappBot/README.md) - Details on WhatsApp bot setup and usage.
+
+---
+
+## **Contributing**
 
 Pull requests are welcome!
 Please open an issue for major changes or feature requests.
 
+---
 
-## License
+## **License**
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is open source under the [MIT License](LICENSE).
