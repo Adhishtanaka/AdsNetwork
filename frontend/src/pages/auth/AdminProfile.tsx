@@ -641,6 +641,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={() => setDeleteModal({ isOpen: false, type: '', id: null, name: '' })}
                   className="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-100 px-4 py-2 rounded-lg font-medium transition-colors">
+                    Cancle
                 </button>
               </div>
             </Dialog.Panel>

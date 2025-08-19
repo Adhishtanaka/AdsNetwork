@@ -123,7 +123,7 @@ async login(email: string, password: string, location: { lat: number; lng: numbe
     return this.request(endpoint);
   }
 
-  async getAdvertisement(id: string): Promise<ApiResponse<Any>> {
+  async getAdvertisement(id: string): Promise<ApiResponse<any>> {
     return this.request(`/advertisements/${id}`);
   }
 
