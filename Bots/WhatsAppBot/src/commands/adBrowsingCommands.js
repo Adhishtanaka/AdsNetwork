@@ -4,7 +4,7 @@ const { formatAdDetails, ensureAuth, sortAdsByDistance, createShortUrl } = requi
 const { MessageMedia } = require('whatsapp-web.js');
 
 /**
- * Handles the `!all_ads` command.
+ * Handles the `!all` command.
  * Retrieves and displays all available advertisements.
  * @param {object} adsService - The `AdsNetworkService` instance.
  * @param {function(string): Promise<void>} replyCallback - Function to send a reply message.
@@ -64,7 +64,7 @@ const handleAllAds = async (adsService, replyCallback) => {
 };
 
 /**
- * Handles the `!view_ad` command.
+ * Handles the `!view` command.
  * Retrieves and displays detailed information for a specific advertisement.
  * @param {string[]} args - Command arguments: [adId].
  * @param {object} adsService - The `AdsNetworkService` instance.
@@ -72,7 +72,7 @@ const handleAllAds = async (adsService, replyCallback) => {
  */
 const handleViewAd = async (args, adsService, replyCallback) => {
     if (args.length < 1) {
-        await replyCallback('🔍 *Usage:* `!view_ad <adId>`\n\nView detailed information about a specific advertisement.');
+        await replyCallback('🔍 *Usage:* `!view <adId>`\n\nView detailed information about a specific advertisement.');
         return;
     }
     
@@ -127,38 +127,41 @@ const handleViewAd = async (args, adsService, replyCallback) => {
 
 /**
  * Handles the `!nearby` command.
- * Retrieves advertisements and filters them by proximity to the user's location.
+ * Requests the user's location and then shows nearby advertisements.
  * @param {string} whatsappId - The WhatsApp ID of the user.
  * @param {string[]} args - Command arguments: [maxDistance (optional)].
- * @param {object} sessionManager - The `userSessions` object.
  * @param {object} adsService - The `AdsNetworkService` instance.
  * @param {function(string): Promise<void>} replyCallback - Function to send a reply message.
  */
 const handleNearbyAds = async (whatsappId, args, sessionManager, adsService, replyCallback) => {
-    const session = sessionManager.getSession(whatsappId);
-    if (!(await ensureAuth(session, replyCallback))) return;
+    // Parse max distance parameter (in km), default to 10km if not provided
+    let maxDistance = 10; // Default: 10km radius
+    if (args.length > 0) {
+        const parsedDistance = parseFloat(args[0]);
+        if (!isNaN(parsedDistance) && parsedDistance > 0) {
+            maxDistance = parsedDistance;
+        }
+    }
     
-    // Get user's current location
+    // Request location from user
+    // await replyCallback(`📍 *Share Your Location*\n\nTo find advertisements near you, please:\n\n1. Share your location using WhatsApp's location feature\n   OR\n2. Reply with your coordinates in format: \`!location <latitude> <longitude>\`\n\nExample: \`!location 6.9271 79.8612\`\n\nI'll search for ads within ${maxDistance}km of your location.`);
+    await replyCallback(`📍 *Share Your Location*\n\nTo find advertisements near you, please:\n\nShare your location using WhatsApp's location feature\n\nI'll search for ads within ${maxDistance}km of your location.`);
+
+    // The actual location processing and nearby ad searching will be handled 
+    // when the user responds with their location
+    return { awaitingLocation: true, maxDistance: maxDistance };
+};
+
+/**
+ * Processes location data and finds nearby ads
+ * @param {number} latitude - The latitude coordinate
+ * @param {number} longitude - The longitude coordinate
+ * @param {number} maxDistance - Maximum distance in km
+ * @param {object} adsService - The `AdsNetworkService` instance
+ * @param {function(string): Promise<void>} replyCallback - Function to send a reply message
+ */
+const processNearbyAdsWithLocation = async (latitude, longitude, maxDistance, adsService, replyCallback) => {
     try {
-        const profile = await adsService.getUserProfile(session.jwtToken);
-        console.log('[DEBUG] User profile:', JSON.stringify(profile, null, 2));
-        if (!profile.location || !profile.location.lat || !profile.location.lng) {
-            await replyCallback('Your location information is missing or invalid. Please login again with valid location details.');
-            return;
-        }
-        
-        const userLat = profile.location.lat;
-        const userLng = profile.location.lng;
-        
-        // Parse max distance parameter (in km), default to 10km if not provided
-        let maxDistance = 10; // Default: 10km radius
-        if (args.length > 0) {
-            const parsedDistance = parseFloat(args[0]);
-            if (!isNaN(parsedDistance) && parsedDistance > 0) {
-                maxDistance = parsedDistance;
-            }
-        }
-        
         // Get all ads
         const response = await adsService.getAllAdvertisements();
         
@@ -184,7 +187,7 @@ const handleNearbyAds = async (whatsappId, args, sessionManager, adsService, rep
         }
         
         // Sort and filter ads by distance
-        const nearbyAds = sortAdsByDistance(allAds, userLat, userLng, maxDistance);
+        const nearbyAds = sortAdsByDistance(allAds, latitude, longitude, maxDistance);
         
         if (nearbyAds.length === 0) {
             await replyCallback(`📭 *No Nearby Advertisements*\n\nNo advertisements found within ${maxDistance}km of your location.\n\nTry increasing the search radius: \`!nearby 20\``);
@@ -201,12 +204,12 @@ const handleNearbyAds = async (whatsappId, args, sessionManager, adsService, rep
                 `${ad.distance.toFixed(2)}km away` : 
                 'Distance unknown';
                 
-            reply += `*🏷️ ${title}* (ID: ${adId})\n💰 ${price} per kg\n📏 ${distance}\n\nTo view details: \`!view_ad ${adId}\`\n\n---\n\n`;
+            reply += `*🏷️ ${title}* (ID: ${adId})\n💰 ${price} per kg\n📏 ${distance}\n\nTo view details: \`!view ${adId}\`\n\n---\n\n`;
         });
         
         await replyCallback(reply);
     } catch (error) {
-        console.error('[ERROR] handleNearbyAds:', error);
+        console.error('[ERROR] processNearbyAdsWithLocation:', error);
         await replyCallback(`❌ *Error Finding Nearby Ads*\n\nCouldn't retrieve nearby advertisements. Error: ${error.message}\n\nPlease try again later.`);
     }
 };
@@ -274,7 +277,7 @@ const handleSearchAds = async (args, adsService, replyCallback) => {
                 (ad.description.length > 100 ? ad.description.substring(0, 97) + '...' : ad.description) : 
                 'No description';
                 
-            reply += `*🏷️ ${title}* (ID: ${adId})\n💰 ${price} per kg\n📁 ${category}\n📝 ${shortDesc}\n\nTo view details: \`!view_ad ${adId}\`\n\n---\n\n`;
+            reply += `*🏷️ ${title}* (ID: ${adId})\n💰 ${price} per kg\n📁 ${category}\n📝 ${shortDesc}\n\nTo view details: \`!view ${adId}\`\n\n---\n\n`;
         });
         
         await replyCallback(reply);
@@ -288,5 +291,6 @@ module.exports = {
     handleAllAds,
     handleViewAd,
     handleNearbyAds,
-    handleSearchAds
+    handleSearchAds,
+    processNearbyAdsWithLocation // Export the new function
 };

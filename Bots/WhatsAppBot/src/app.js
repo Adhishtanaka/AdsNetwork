@@ -39,6 +39,9 @@ const client = new Client({
   }
 });
 
+// Add a state manager to track users awaiting location
+const userStates = new Map();
+
 // --- WhatsApp Client Event Handlers ---
 
 client.on('qr', (qr) => {
@@ -118,48 +121,93 @@ client.on('message', async (msg) => {
   console.log(`[RECEIVED] From: ${whatsappId}, Command: ${command}, Args: ${args.join(' ')}`);
 
   try {
+    // Check if this is a location response for a pending nearby request
+    if (msg.type === 'location' && userStates.has(whatsappId) && userStates.get(whatsappId).awaitingLocation) {
+      const { extractLocationFromMessage } = require('./utils/helpers');
+      const location = await extractLocationFromMessage(msg);
+      console.log(`[DEBUG] Received location from ${whatsappId}:`, location);
+      
+      if (location) {
+        const userState = userStates.get(whatsappId);
+        await adBrowsingCommands.processNearbyAdsWithLocation(
+          location.latitude,
+          location.longitude, 
+          userState.maxDistance,
+          adsService,
+          replyCallback
+        );
+        userStates.delete(whatsappId); // Clear the state
+      } else {
+        await replyCallback("❌ Could not read your location. Please try sharing your location again or use the !location command.");
+      }
+      return;
+    }
+    
+    // Check for manual location input
+    if (command === '!location' && userStates.has(whatsappId) && userStates.get(whatsappId).awaitingLocation) {
+      if (args.length < 2) {
+        await replyCallback("❌ Invalid location format. Please use: !location <latitude> <longitude>");
+        return;
+      }
+      
+      const latitude = parseFloat(args[0]);
+      const longitude = parseFloat(args[1]);
+      
+      if (isNaN(latitude) || isNaN(longitude)) {
+        await replyCallback("❌ Invalid coordinates. Latitude and longitude must be valid numbers.");
+        return;
+      }
+      
+      const userState = userStates.get(whatsappId);
+      await adBrowsingCommands.processNearbyAdsWithLocation(
+        latitude,
+        longitude, 
+        userState.maxDistance,
+        adsService,
+        replyCallback
+      );
+      userStates.delete(whatsappId); // Clear the state
+      return;
+    }
+
     // Dispatch commands to appropriate handlers
     switch (command) {
       case '!help':
         // The help message is directly in this file for simplicity
-        await replyCallback(`*AdsNetwork Buyer Bot Commands:*
+        await replyCallback(`*📱 Agriලංකා Buyer Bot Commands 📱*
 
-*Authentication:*
-\`!login <email> <password> <loc_name> <lat> <lng>\` - Log in to your AdsNetwork account.
-\`!profile\` - View your AdsNetwork user profile.
-\`!logout\` - Log out from your AdsNetwork account.
+      *🔍 Browsing Advertisements:*
+      • \`!all\` - View all available advertisements
+      • \`!view <adId>\` - View detailed information for a specific ad
+      • \`!nearby [maxDistance]\` - Find ads near your location (default: 10km radius)
+      • \`!search <keyword(s)>\` - Search for ads with specific keywords
 
-*Browsing Advertisements:*
-\`!all_ads\` - View all available advertisements.
-\`!view_ad <adId>\` - View detailed information for a specific advertisement.
-\`!nearby [maxDistance]\` - View advertisements near your location (default: 10km radius).
-\`!search <keyword(s)>\` - Search for ads containing specific keywords in title or description.
-
-*Important Notes:*
-- Replace spaces in location/description names with underscores (e.g., \`Colombo_City\`, \`Great_product_very_satisfied\`).
-- Latitude/Longitude must be numbers.`);
+      _Type any command to get started!_`);
         break;
 
-      // Authentication Commands
-      case '!login':
-        await authCommands.handleLogin(whatsappId, args, userSessions, adsService, replyCallback);
-        break;
-      case '!logout':
-        await authCommands.handleLogout(whatsappId, userSessions, replyCallback);
-        break;
-      case '!profile':
-        await authCommands.handleProfile(whatsappId, userSessions, adsService, replyCallback);
-        break;
+      // // Authentication Commands
+      // case '!login':
+      //   await authCommands.handleLogin(whatsappId, args, userSessions, adsService, replyCallback);
+      //   break;
+      // case '!logout':
+      //   await authCommands.handleLogout(whatsappId, userSessions, replyCallback);
+      //   break;
+      // case '!profile':
+      //   await authCommands.handleProfile(whatsappId, userSessions, adsService, replyCallback);
+      //   break;
 
       // Advertisement Browsing Commands
-      case '!all_ads':
+      case '!all':
         await adBrowsingCommands.handleAllAds(adsService, replyCallback);
         break;
-      case '!view_ad':
+      case '!view':
         await adBrowsingCommands.handleViewAd(args, adsService, replyCallback);
         break;
       case '!nearby':
-        await adBrowsingCommands.handleNearbyAds(whatsappId, args, userSessions, adsService, replyCallback);
+        const nearbyResult = await adBrowsingCommands.handleNearbyAds(whatsappId, args, userSessions, adsService, replyCallback);
+        if (nearbyResult && nearbyResult.awaitingLocation) {
+          userStates.set(whatsappId, nearbyResult);
+        }
         break;
       case '!search':
         await adBrowsingCommands.handleSearchAds(args, adsService, replyCallback);

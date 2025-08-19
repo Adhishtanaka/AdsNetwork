@@ -59,7 +59,7 @@ const handleLogin = async (whatsappId, args, sessionManager, adsService, replyCa
         const response = await adsService.login(email, password, location);
         console.log(`[DEBUG] Login response: ${JSON.stringify(response)}`);
         sessionManager.setSession(whatsappId, response.token, response.email, response.username);
-        await replyCallback(`✅ *Login Successful*\n\nWelcome, ${response.user.username}! You are now logged in.\n\nYou can now use commands like:\n• View ads: \`!all_ads\`\n• Search nearby: \`!nearby\`\n• Your profile: \`!profile\``);
+        await replyCallback(`✅ *Login Successful*\n\nWelcome, ${response.user.username}! You are now logged in.\n\nYou can now use commands like:\n• View ads: \`!all\`\n• Search nearby: \`!nearby\`\n• Your profile: \`!profile\``);
     } catch (error) {
         await replyCallback(`❌ *Login Failed*\n\nUnable to log in. Error: ${error.message}\n\nPlease check your credentials and try again.`);
     }
