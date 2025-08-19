@@ -76,7 +76,7 @@ client.on('ready', async () => {
   
   // Initialize and start AdBoosterService
   adBooster = new AdBoosterService(client, adsService, notificationTargetId);
-  adBooster.startPolling(10 * 60 * 1000); // Check for non-boosted ads every 10 minutes
+  adBooster.startPolling(1 * 60 * 1000); // Check for non-boosted ads every 1 minutes
 });
 
 client.on('disconnected', (reason) => {
@@ -135,15 +135,9 @@ client.on('message', async (msg) => {
 \`!nearby [maxDistance]\` - View advertisements near your location (default: 10km radius).
 \`!search <keyword(s)>\` - Search for ads containing specific keywords in title or description.
 
-*Interacting with Advertisements:*
-\`!add_comment <adId> <sentiment> <description>\` - Add a comment to an ad (sentiment: good, bad, neutral).
-\`!view_comments <adId>\` - View comments for a specific advertisement.
-\`!all_comments\` - View all comments across all advertisements.
-
 *Important Notes:*
 - Replace spaces in location/description names with underscores (e.g., \`Colombo_City\`, \`Great_product_very_satisfied\`).
-- Latitude/Longitude must be numbers.
-- Ensure your AdsNetwork backend is running at ${adsService.BASE_URL}.`);
+- Latitude/Longitude must be numbers.`);
         break;
 
       // Authentication Commands
@@ -172,15 +166,15 @@ client.on('message', async (msg) => {
         break;
 
       // Comment Commands
-      case '!add_comment':
-        await commentCommands.handleAddComment(whatsappId, args, userSessions, adsService, replyCallback);
-        break;
-      case '!view_comments':
-        await commentCommands.handleViewComments(args, adsService, replyCallback);
-        break;
-      case '!all_comments':
-        await commentCommands.handleAllComments(adsService, replyCallback);
-        break;
+      // case '!add_comment':
+      //   await commentCommands.handleAddComment(whatsappId, args, userSessions, adsService, replyCallback);
+      //   break;
+      // case '!view_comments':
+      //   await commentCommands.handleViewComments(args, adsService, replyCallback);
+      //   break;
+      // case '!all_comments':
+      //   await commentCommands.handleAllComments(adsService, replyCallback);
+      //   break;
 
       default:
         // If the message starts with '!' but is not a recognized command

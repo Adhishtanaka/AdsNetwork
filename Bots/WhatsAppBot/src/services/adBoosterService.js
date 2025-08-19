@@ -129,7 +129,7 @@ class AdBoosterService {
             return;
         }
 
-        const adDetails = formatAdDetails(ad);
+        const adDetails = await formatAdDetails(ad);
         let message = `🚀 *BOOSTED ADVERTISEMENT* 🚀\n\n${adDetails}`;
         let media = null;
         
