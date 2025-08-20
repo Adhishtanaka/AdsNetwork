@@ -128,7 +128,7 @@ pnpm dev
 
 The **AgriLanka MCP Server** connects AI assistants to the marketplace for product search and nearby product discovery.
 
-* [MCP Server README](mcp/README.md) - Guide for setting up and using the MCP server.
+* [MCP Server README](MCP/README.md) - Guide for setting up and using the MCP server.
 
 > Works with MCP-compatible clients like 5ire, Cursor, or VS Code. Claude may have compatibility issues.
 
@@ -139,7 +139,7 @@ The **AgriLanka MCP Server** connects AI assistants to the marketplace for produ
 * Users can browse ads, view product details, find nearby items, and contact sellers directly via WhatsApp.
 * Boosted ads automatically appear in the Agriලංකා WhatsApp channel.
 
-* [WhatsApp Bot README](Bots/WhatsappBot/README.md) - Details on WhatsApp bot setup and usage.
+* [WhatsApp Bot README](Bots/WhatsAppBot/README.md) - Details on WhatsApp bot setup and usage.
 
 ---
 
