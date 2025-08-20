@@ -52,31 +52,6 @@ const formatAdDetails = async (ad) => {
 };
 
 /**
- * Formats comment details into a readable string for display.
- * @param {object} comment - Comment object from the API.
- * @returns {string}
- */
-const formatCommentDetails = (comment) => {
-    return `ID: ${comment.id}
-Sentiment: ${comment.sentiment}
-Description: ${comment.description}`;
-};
-
-/**
- * Checks if the user has an active session. If not, sends a message to the user.
- * @param {object | undefined} session - The user's session object.
- * @param {function(string): Promise<void>} replyCallback - Function to send a reply message.
- * @returns {Promise<boolean>} - True if authenticated, false otherwise.
- */
-const ensureAuth = async (session, replyCallback) => {
-    if (!session) {
-        await replyCallback('You need to be logged in to use this command. Please use `!login <email> <password> <loc_name> <lat> <lng>` first.');
-        return false;
-    }
-    return true;
-};
-
-/**
  * Calculate distance between two coordinates using the Haversine formula.
  * @param {number} lat1 - Latitude of the first point.
  * @param {number} lng1 - Longitude of the first point.
@@ -205,11 +180,8 @@ const extractLocationFromMessage = async (msg) => {
 module.exports = {
     parseLocationArgs,
     formatAdDetails,
-    formatCommentDetails,
-    ensureAuth,
     calculateDistance,
     sortAdsByDistance,
     createShortUrl,
-    extractLocationFromMessage,
-    // MessageMedia, // Export MessageMedia
+    extractLocationFromMessage
 };

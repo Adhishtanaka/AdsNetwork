@@ -63,16 +63,6 @@ class AdsNetworkService {
         }
     }
 
-    // --- Authentication Endpoints ---
-    async login(email, password, location) {
-        const body = { email, password, location };
-        return this._request('/auth/login', 'POST', body);
-    }
-
-    async getUserProfile(token) {
-        return this._request('/auth/profile', 'GET', null, token);
-    }
-
     // --- Browsing Advertisements ---
     async getAllAdvertisements() {
         return this._request('/advertisements', 'GET');
@@ -89,19 +79,6 @@ class AdsNetworkService {
 
     async boostWhatsAppAd(whatsAppId) {
         return this._request(`/advertisements/boostwhtsappid/${whatsAppId}`, 'POST');
-    }
-
-    // --- Interacting with Advertisements (as a Buyer) ---
-    async addCommentToAdvertisement(commentData, token) {
-        return this._request('/comments', 'POST', commentData, token);
-    }
-
-    async getAllComments() {
-        return this._request('/comments', 'GET');
-    }
-
-    async getCommentsForAdvertisement(adId) {
-        return this._request(`/comments/ad/${adId}`, 'GET');
     }
 }
 

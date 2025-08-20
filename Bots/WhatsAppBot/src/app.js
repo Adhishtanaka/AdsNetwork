@@ -9,9 +9,7 @@ const AdNotifierService = require('./services/adNotifierService');
 const AdBoosterService = require('./services/adBoosterService'); // Import new booster service
 
 // Import command handlers
-const authCommands = require('./commands/authCommands');
 const adBrowsingCommands = require('./commands/adBrowsingCommands');
-const commentCommands = require('./commands/commentCommands');
 
 const adsService = new AdsNetworkService(); // Initialize the API service
 
@@ -185,17 +183,6 @@ client.on('message', async (msg) => {
       _Type any command to get started!_`);
         break;
 
-      // // Authentication Commands
-      // case '!login':
-      //   await authCommands.handleLogin(whatsappId, args, userSessions, adsService, replyCallback);
-      //   break;
-      // case '!logout':
-      //   await authCommands.handleLogout(whatsappId, userSessions, replyCallback);
-      //   break;
-      // case '!profile':
-      //   await authCommands.handleProfile(whatsappId, userSessions, adsService, replyCallback);
-      //   break;
-
       // Advertisement Browsing Commands
       case '!all':
         await adBrowsingCommands.handleAllAds(adsService, replyCallback);
@@ -212,17 +199,6 @@ client.on('message', async (msg) => {
       case '!search':
         await adBrowsingCommands.handleSearchAds(args, adsService, replyCallback);
         break;
-
-      // Comment Commands
-      // case '!add_comment':
-      //   await commentCommands.handleAddComment(whatsappId, args, userSessions, adsService, replyCallback);
-      //   break;
-      // case '!view_comments':
-      //   await commentCommands.handleViewComments(args, adsService, replyCallback);
-      //   break;
-      // case '!all_comments':
-      //   await commentCommands.handleAllComments(adsService, replyCallback);
-      //   break;
 
       default:
         // If the message starts with '!' but is not a recognized command

@@ -1,6 +1,6 @@
 // src/commands/adBrowsingCommands.js
 
-const { formatAdDetails, ensureAuth, sortAdsByDistance, createShortUrl } = require('../utils/helpers');
+const { formatAdDetails, sortAdsByDistance, createShortUrl } = require('../utils/helpers');
 const { MessageMedia } = require('whatsapp-web.js');
 
 /**
